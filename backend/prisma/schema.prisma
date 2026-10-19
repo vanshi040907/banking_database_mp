@@ -1,0 +1,533 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model account {
+  acc_no                                                 BigInt             @id @default(autoincrement()) @db.UnsignedBigInt
+  cust_id                                                Int
+  branch_ifsc                                            String             @db.Char(11)
+  type_id                                                Int
+  opened_by                                              Int?
+  balance                                                Decimal            @default(0.00) @db.Decimal(15, 2)
+  creation_date                                          DateTime           @default(dbgenerated("(curdate())")) @db.Date
+  validity                                               DateTime?          @db.Date
+  closed_date                                            DateTime?          @db.Date
+  is_primary                                             Boolean            @default(false)
+  status                                                 account_status     @default(ACTIVE)
+  customer                                               customer           @relation(fields: [cust_id], references: [cust_id], onDelete: NoAction, onUpdate: NoAction, map: "account_ibfk_1")
+  branch                                                 branch             @relation(fields: [branch_ifsc], references: [ifsc_code], onDelete: NoAction, onUpdate: NoAction, map: "account_ibfk_2")
+  account_type                                           account_type       @relation(fields: [type_id], references: [type_id], onDelete: NoAction, onUpdate: NoAction, map: "account_ibfk_3")
+  employee                                               employee?          @relation(fields: [opened_by], references: [emp_id], onDelete: NoAction, onUpdate: NoAction, map: "account_ibfk_4")
+  bank_transaction_bank_transaction_from_acc_noToaccount bank_transaction[] @relation("bank_transaction_from_acc_noToaccount")
+  bank_transaction_bank_transaction_to_acc_noToaccount   bank_transaction[] @relation("bank_transaction_to_acc_noToaccount")
+  card                                                   card[]
+  fixed_deposit                                          fixed_deposit[]
+  loan                                                   loan[]
+
+  @@index([branch_ifsc], map: "idx_account_branch")
+  @@index([cust_id], map: "idx_account_cust")
+  @@index([opened_by], map: "opened_by")
+  @@index([type_id], map: "type_id")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model account_type {
+  type_id         Int       @id @default(autoincrement())
+  type_name       String    @unique(map: "type_name") @db.VarChar(30)
+  min_balance     Decimal   @default(0.00) @db.Decimal(15, 2)
+  interest_rate   Decimal   @default(0.00) @db.Decimal(5, 2)
+  daily_txn_limit Decimal   @db.Decimal(15, 2)
+  account         account[]
+}
+
+model audit_log {
+  log_id     BigInt    @id @default(autoincrement())
+  emp_id     Int?
+  action     String    @db.VarChar(40)
+  table_name String    @db.VarChar(40)
+  record_id  String    @db.VarChar(40)
+  old_value  String?   @db.VarChar(255)
+  new_value  String?   @db.VarChar(255)
+  details    String?   @db.VarChar(500)
+  created_at DateTime  @default(now()) @db.Timestamp(0)
+  employee   employee? @relation(fields: [emp_id], references: [emp_id], onDelete: NoAction, onUpdate: NoAction, map: "audit_log_ibfk_1")
+
+  @@index([emp_id], map: "emp_id")
+  @@index([created_at], map: "idx_audit_time")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model bank_transaction {
+  trans_id                                      BigInt                        @id @default(autoincrement())
+  reference_no                                  String                        @unique(map: "reference_no") @default(dbgenerated("(uuid())")) @db.Char(36)
+  from_acc_no                                   BigInt?                       @db.UnsignedBigInt
+  to_acc_no                                     BigInt?                       @db.UnsignedBigInt
+  card_id                                       Int?
+  trans_type                                    bank_transaction_trans_type
+  trans_mode                                    bank_transaction_trans_mode
+  amount                                        Decimal                       @db.Decimal(15, 2)
+  trans_date                                    DateTime                      @default(now()) @db.DateTime(0)
+  trans_status                                  bank_transaction_trans_status @default(SUCCESS)
+  initiated_by                                  Int?
+  remarks                                       String?                       @db.VarChar(255)
+  account_bank_transaction_from_acc_noToaccount account?                      @relation("bank_transaction_from_acc_noToaccount", fields: [from_acc_no], references: [acc_no], onDelete: NoAction, onUpdate: NoAction, map: "bank_transaction_ibfk_1")
+  account_bank_transaction_to_acc_noToaccount   account?                      @relation("bank_transaction_to_acc_noToaccount", fields: [to_acc_no], references: [acc_no], onDelete: NoAction, onUpdate: NoAction, map: "bank_transaction_ibfk_2")
+  card                                          card?                         @relation(fields: [card_id], references: [card_id], onDelete: NoAction, onUpdate: NoAction, map: "bank_transaction_ibfk_3")
+  employee                                      employee?                     @relation(fields: [initiated_by], references: [emp_id], onDelete: NoAction, onUpdate: NoAction, map: "bank_transaction_ibfk_4")
+  fd_payout                                     fd_payout[]
+  loan_payment                                  loan_payment[]
+
+  @@index([card_id], map: "card_id")
+  @@index([trans_date], map: "idx_trans_date")
+  @@index([from_acc_no, trans_date], map: "idx_trans_from")
+  @@index([to_acc_no, trans_date], map: "idx_trans_to")
+  @@index([initiated_by], map: "initiated_by")
+}
+
+model branch {
+  ifsc_code                             String          @id @db.Char(11)
+  branch_name                           String          @db.VarChar(100)
+  address_line                          String          @db.VarChar(255)
+  pincode                               String          @db.Char(6)
+  establishment_date                    DateTime        @db.Date
+  manager_id                            Int?
+  status                                branch_status   @default(ACTIVE)
+  account                               account[]
+  location                              location        @relation(fields: [pincode], references: [pincode], onDelete: NoAction, onUpdate: NoAction, map: "branch_ibfk_1")
+  employee_branch_manager_idToemployee  employee?       @relation("branch_manager_idToemployee", fields: [manager_id], references: [emp_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_branch_manager")
+  branch_phone                          branch_phone[]
+  employee_employee_branch_ifscTobranch employee[]      @relation("employee_branch_ifscTobranch")
+  fixed_deposit                         fixed_deposit[]
+  loan                                  loan[]
+
+  @@index([manager_id], map: "fk_branch_manager")
+  @@index([pincode], map: "pincode")
+}
+
+model branch_phone {
+  ifsc_code String @db.Char(11)
+  phone_no  String @db.VarChar(15)
+  branch    branch @relation(fields: [ifsc_code], references: [ifsc_code], onDelete: Cascade, onUpdate: NoAction, map: "branch_phone_ibfk_1")
+
+  @@id([ifsc_code, phone_no])
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model card {
+  card_id          Int                @id @default(autoincrement())
+  acc_no           BigInt             @db.UnsignedBigInt
+  approved_by      Int
+  card_no          String             @unique(map: "card_no") @db.VarChar(19)
+  card_type        card_card_type
+  issue_date       DateTime           @db.Date
+  expiry_date      DateTime           @db.Date
+  status           card_status        @default(ACTIVE)
+  pin_hash         String             @db.VarChar(100)
+  pin_attempts     Int                @default(0) @db.TinyInt
+  daily_limit      Decimal            @default(50000.00) @db.Decimal(12, 2)
+  bank_transaction bank_transaction[]
+  account          account            @relation(fields: [acc_no], references: [acc_no], onDelete: NoAction, onUpdate: NoAction, map: "card_ibfk_1")
+  employee         employee           @relation(fields: [approved_by], references: [emp_id], onDelete: NoAction, onUpdate: NoAction, map: "card_ibfk_2")
+
+  @@index([acc_no], map: "acc_no")
+  @@index([approved_by], map: "approved_by")
+}
+
+model customer {
+  cust_id              Int                    @id @default(autoincrement())
+  name                 String                 @db.VarChar(100)
+  dob                  DateTime               @db.Date
+  gender               customer_gender
+  address_line         String                 @db.VarChar(255)
+  pincode              String                 @db.Char(6)
+  id_proof_type        customer_id_proof_type
+  id_proof_no          String                 @db.VarChar(30)
+  pan_no               String?                @unique(map: "pan_no") @db.Char(10)
+  kyc_status           customer_kyc_status    @default(PENDING)
+  status               customer_status        @default(ACTIVE)
+  password_hash        String                 @db.VarChar(100)
+  must_change_password Boolean                @default(true)
+  created_at           DateTime               @default(now()) @db.Timestamp(0)
+  account              account[]
+  location             location               @relation(fields: [pincode], references: [pincode], onDelete: NoAction, onUpdate: NoAction, map: "customer_ibfk_1")
+  customer_email       customer_email[]
+  customer_phone       customer_phone[]
+  fixed_deposit        fixed_deposit[]
+  loan                 loan[]
+  login_attempt        login_attempt[]
+  otp_verification     otp_verification[]
+
+  @@unique([id_proof_type, id_proof_no], map: "id_proof_type")
+  @@index([pincode], map: "pincode")
+}
+
+model customer_email {
+  cust_id    Int
+  mail       String   @unique(map: "mail") @db.VarChar(120)
+  is_primary Boolean  @default(false)
+  customer   customer @relation(fields: [cust_id], references: [cust_id], onDelete: Cascade, onUpdate: NoAction, map: "customer_email_ibfk_1")
+
+  @@id([cust_id, mail])
+}
+
+model customer_phone {
+  cust_id    Int
+  ph_no      String   @unique(map: "ph_no") @db.VarChar(15)
+  is_primary Boolean  @default(false)
+  customer   customer @relation(fields: [cust_id], references: [cust_id], onDelete: Cascade, onUpdate: NoAction, map: "customer_phone_ibfk_1")
+
+  @@id([cust_id, ph_no])
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model employee {
+  emp_id                              Int                @id @default(autoincrement())
+  branch_ifsc                         String             @db.Char(11)
+  role_id                             Int
+  emp_name                            String             @db.VarChar(100)
+  gender                              employee_gender
+  dob                                 DateTime           @db.Date
+  designation                         String             @db.VarChar(50)
+  salary                              Decimal            @db.Decimal(12, 2)
+  join_date                           DateTime           @db.Date
+  status                              employee_status    @default(ACTIVE)
+  password_hash                       String             @db.VarChar(100)
+  last_login                          DateTime?          @db.DateTime(0)
+  must_change_password                Boolean            @default(true)
+  account                             account[]
+  audit_log                           audit_log[]
+  bank_transaction                    bank_transaction[]
+  branch_branch_manager_idToemployee  branch[]           @relation("branch_manager_idToemployee")
+  card                                card[]
+  branch_employee_branch_ifscTobranch branch             @relation("employee_branch_ifscTobranch", fields: [branch_ifsc], references: [ifsc_code], onDelete: NoAction, onUpdate: NoAction, map: "employee_ibfk_1")
+  role                                role               @relation(fields: [role_id], references: [role_id], onDelete: NoAction, onUpdate: NoAction, map: "employee_ibfk_2")
+  employee_email                      employee_email[]
+  employee_phone                      employee_phone[]
+  loan                                loan[]
+  login_attempt                       login_attempt[]
+  otp_verification                    otp_verification[]
+
+  @@index([branch_ifsc], map: "branch_ifsc")
+  @@index([role_id], map: "role_id")
+}
+
+model employee_email {
+  emp_id   Int
+  mail     String   @unique(map: "mail") @db.VarChar(120)
+  employee employee @relation(fields: [emp_id], references: [emp_id], onDelete: Cascade, onUpdate: NoAction, map: "employee_email_ibfk_1")
+
+  @@id([emp_id, mail])
+}
+
+model employee_phone {
+  emp_id   Int
+  phone_no String   @unique(map: "phone_no") @db.VarChar(15)
+  employee employee @relation(fields: [emp_id], references: [emp_id], onDelete: Cascade, onUpdate: NoAction, map: "employee_phone_ibfk_1")
+
+  @@id([emp_id, phone_no])
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model fd_payout {
+  payout_id         Int                   @id @default(autoincrement())
+  fd_id             Int
+  payout_kind       fd_payout_payout_kind
+  payout_date       DateTime              @db.Date
+  amount            Decimal               @db.Decimal(15, 2)
+  credited_trans_id BigInt?
+  fixed_deposit     fixed_deposit         @relation(fields: [fd_id], references: [fd_id], onDelete: NoAction, onUpdate: NoAction, map: "fd_payout_ibfk_1")
+  bank_transaction  bank_transaction?     @relation(fields: [credited_trans_id], references: [trans_id], onDelete: NoAction, onUpdate: NoAction, map: "fd_payout_ibfk_2")
+
+  @@index([credited_trans_id], map: "credited_trans_id")
+  @@index([fd_id], map: "fd_id")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model fixed_deposit {
+  fd_id           Int                       @id @default(autoincrement())
+  cust_id         Int
+  branch_ifsc     String                    @db.Char(11)
+  linked_acc_no   BigInt                    @db.UnsignedBigInt
+  amount          Decimal                   @db.Decimal(15, 2)
+  int_rate_fd     Decimal                   @db.Decimal(5, 2)
+  duration_months Int
+  start_date      DateTime                  @db.Date
+  payout_type     fixed_deposit_payout_type @default(AT_MATURITY)
+  status          fixed_deposit_status      @default(ACTIVE)
+  fd_payout       fd_payout[]
+  customer        customer                  @relation(fields: [cust_id], references: [cust_id], onDelete: NoAction, onUpdate: NoAction, map: "fixed_deposit_ibfk_1")
+  branch          branch                    @relation(fields: [branch_ifsc], references: [ifsc_code], onDelete: NoAction, onUpdate: NoAction, map: "fixed_deposit_ibfk_2")
+  account         account                   @relation(fields: [linked_acc_no], references: [acc_no], onDelete: NoAction, onUpdate: NoAction, map: "fixed_deposit_ibfk_3")
+
+  @@index([branch_ifsc], map: "branch_ifsc")
+  @@index([cust_id], map: "cust_id")
+  @@index([linked_acc_no], map: "linked_acc_no")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model loan {
+  loan_id            Int                 @id @default(autoincrement())
+  cust_id            Int
+  branch_ifsc        String              @db.Char(11)
+  approved_by        Int?
+  disbursed_acc_no   BigInt?             @db.UnsignedBigInt
+  loantype           loan_loantype
+  principle_amt      Decimal             @db.Decimal(15, 2)
+  int_rate           Decimal             @db.Decimal(5, 2)
+  tenure_months      Int
+  start_date         DateTime            @db.Date
+  outstanding_amount Decimal             @db.Decimal(15, 2)
+  status             loan_status         @default(PENDING)
+  customer           customer            @relation(fields: [cust_id], references: [cust_id], onDelete: NoAction, onUpdate: NoAction, map: "loan_ibfk_1")
+  branch             branch              @relation(fields: [branch_ifsc], references: [ifsc_code], onDelete: NoAction, onUpdate: NoAction, map: "loan_ibfk_2")
+  employee           employee?           @relation(fields: [approved_by], references: [emp_id], onDelete: NoAction, onUpdate: NoAction, map: "loan_ibfk_3")
+  account            account?            @relation(fields: [disbursed_acc_no], references: [acc_no], onDelete: NoAction, onUpdate: NoAction, map: "loan_ibfk_4")
+  loan_emi_schedule  loan_emi_schedule[]
+  loan_payment       loan_payment[]
+
+  @@index([approved_by], map: "approved_by")
+  @@index([branch_ifsc], map: "branch_ifsc")
+  @@index([disbursed_acc_no], map: "disbursed_acc_no")
+  @@index([cust_id], map: "idx_loan_cust")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model loan_emi_schedule {
+  emi_id         Int                      @id @default(autoincrement())
+  loan_id        Int
+  installment_no Int
+  due_date       DateTime                 @db.Date
+  emi_amount     Decimal                  @db.Decimal(15, 2)
+  principal_part Decimal                  @db.Decimal(15, 2)
+  interest_part  Decimal                  @db.Decimal(15, 2)
+  status         loan_emi_schedule_status @default(PENDING)
+  loan           loan                     @relation(fields: [loan_id], references: [loan_id], onDelete: Cascade, onUpdate: NoAction, map: "loan_emi_schedule_ibfk_1")
+  loan_payment   loan_payment[]
+
+  @@unique([loan_id, installment_no], map: "loan_id")
+  @@index([due_date, status], map: "idx_emi_due")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model loan_payment {
+  pay_id            Int                   @id @default(autoincrement())
+  loan_id           Int
+  emi_id            Int?
+  trans_id          BigInt?
+  amount            Decimal               @db.Decimal(15, 2)
+  pay_date          DateTime              @default(dbgenerated("(curdate())")) @db.Date
+  pay_mode          loan_payment_pay_mode
+  loan              loan                  @relation(fields: [loan_id], references: [loan_id], onDelete: Cascade, onUpdate: NoAction, map: "loan_payment_ibfk_1")
+  loan_emi_schedule loan_emi_schedule?    @relation(fields: [emi_id], references: [emi_id], onDelete: NoAction, onUpdate: NoAction, map: "loan_payment_ibfk_2")
+  bank_transaction  bank_transaction?     @relation(fields: [trans_id], references: [trans_id], onDelete: NoAction, onUpdate: NoAction, map: "loan_payment_ibfk_3")
+
+  @@index([emi_id], map: "emi_id")
+  @@index([loan_id], map: "loan_id")
+  @@index([trans_id], map: "trans_id")
+}
+
+model location {
+  pincode  String     @id @db.Char(6)
+  city     String     @db.VarChar(60)
+  state    String     @db.VarChar(60)
+  branch   branch[]
+  customer customer[]
+}
+
+model login_attempt {
+  attempt_id   BigInt    @id @default(autoincrement())
+  cust_id      Int?
+  emp_id       Int?
+  success      Boolean
+  ip_address   String?   @db.VarChar(45)
+  attempted_at DateTime  @default(now()) @db.Timestamp(0)
+  customer     customer? @relation(fields: [cust_id], references: [cust_id], onDelete: NoAction, onUpdate: NoAction, map: "login_attempt_ibfk_1")
+  employee     employee? @relation(fields: [emp_id], references: [emp_id], onDelete: NoAction, onUpdate: NoAction, map: "login_attempt_ibfk_2")
+
+  @@index([cust_id], map: "cust_id")
+  @@index([emp_id], map: "emp_id")
+  @@index([attempted_at], map: "idx_login_time")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model otp_verification {
+  otp_id     BigInt                   @id @default(autoincrement())
+  cust_id    Int?
+  emp_id     Int?
+  purpose    otp_verification_purpose @default(LOGIN)
+  otp_hash   String                   @db.VarChar(100)
+  expires_at DateTime                 @db.DateTime(0)
+  attempts   Int                      @default(0) @db.TinyInt
+  used       Boolean                  @default(false)
+  customer   customer?                @relation(fields: [cust_id], references: [cust_id], onDelete: Cascade, onUpdate: NoAction, map: "otp_verification_ibfk_1")
+  employee   employee?                @relation(fields: [emp_id], references: [emp_id], onDelete: Cascade, onUpdate: NoAction, map: "otp_verification_ibfk_2")
+
+  @@index([cust_id], map: "cust_id")
+  @@index([emp_id], map: "emp_id")
+}
+
+model permission {
+  perm_id         Int               @id @default(autoincrement())
+  perm_code       String            @unique(map: "perm_code") @db.VarChar(40)
+  description     String?           @db.VarChar(255)
+  role_permission role_permission[]
+}
+
+model role {
+  role_id         Int               @id @default(autoincrement())
+  role_name       String            @unique(map: "role_name") @db.VarChar(30)
+  description     String?           @db.VarChar(255)
+  employee        employee[]
+  role_permission role_permission[]
+}
+
+model role_permission {
+  role_id    Int
+  perm_id    Int
+  role       role       @relation(fields: [role_id], references: [role_id], onDelete: Cascade, onUpdate: NoAction, map: "role_permission_ibfk_1")
+  permission permission @relation(fields: [perm_id], references: [perm_id], onDelete: Cascade, onUpdate: NoAction, map: "role_permission_ibfk_2")
+
+  @@id([role_id, perm_id])
+  @@index([perm_id], map: "perm_id")
+}
+
+enum fd_payout_payout_kind {
+  INTEREST
+  MATURITY
+  PREMATURE_CLOSURE
+}
+
+enum customer_gender {
+  M
+  F
+  O
+}
+
+enum otp_verification_purpose {
+  LOGIN
+  TRANSFER
+  PROFILE_UPDATE
+}
+
+enum card_card_type {
+  DEBIT
+  CREDIT
+}
+
+enum employee_gender {
+  M
+  F
+  O
+}
+
+enum bank_transaction_trans_type {
+  DEPOSIT
+  WITHDRAWAL
+  TRANSFER
+}
+
+enum loan_loantype {
+  HOME
+  AUTO
+  PERSONAL
+  EDUCATION
+  BUSINESS
+}
+
+enum bank_transaction_trans_mode {
+  CASH
+  UPI
+  NEFT
+  IMPS
+  CARD
+  CHEQUE
+}
+
+enum branch_status {
+  ACTIVE
+  CLOSED
+}
+
+enum customer_id_proof_type {
+  AADHAAR
+  PASSPORT
+  VOTER_ID
+  DRIVING_LICENSE
+}
+
+enum loan_payment_pay_mode {
+  CASH
+  UPI
+  NEFT
+  IMPS
+  CARD
+  CHEQUE
+  ACCOUNT_DEBIT
+}
+
+enum card_status {
+  ACTIVE
+  BLOCKED
+  EXPIRED
+}
+
+enum loan_emi_schedule_status {
+  PENDING
+  PAID
+  OVERDUE
+}
+
+enum fixed_deposit_payout_type {
+  MONTHLY
+  QUARTERLY
+  AT_MATURITY
+}
+
+enum bank_transaction_trans_status {
+  SUCCESS
+  FAILED
+  PENDING
+}
+
+enum customer_kyc_status {
+  PENDING
+  VERIFIED
+  REJECTED
+}
+
+enum employee_status {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+}
+
+enum fixed_deposit_status {
+  ACTIVE
+  MATURED
+  CLOSED
+}
+
+enum account_status {
+  ACTIVE
+  FROZEN
+  CLOSED
+}
+
+enum customer_status {
+  ACTIVE
+  INACTIVE
+  BLOCKED
+}
+
+enum loan_status {
+  PENDING
+  ACTIVE
+  CLOSED
+  DEFAULTED
+}
