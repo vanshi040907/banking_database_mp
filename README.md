@@ -9,8 +9,11 @@ and React frontends.
 banking_db/
 ├── database/   SQL scripts: schema.sql, procedures.sql, views.sql, seed.sql
 ├── backend/    Node.js + Express + Prisma API
-├── user/       React customer portal   (coming soon)
-└── admin/      React employee portal   (coming soon)
+├── shared/     Design system shared by both portals (theme, components, illustrations)
+├── user/       React customer portal   (Vite + Tailwind, port 5173)
+├── admin/      React employee portal   (Vite + Tailwind, port 5174)
+├── design/     Source artwork for the ballpoint-pen illustrations
+└── scripts/    dev-db.sh: project-local MySQL (optional)
 ```
 
 ## 1. Install these first
@@ -33,13 +36,14 @@ cd banking_db
 The database itself is NOT stored in Git. Everyone builds their own local copy
 from the SQL scripts, so the scripts are the single source of truth.
 
-Open **MySQL Workbench**, connect to your local server, and run these four
+Open **MySQL Workbench**, connect to your local server, and run these
 files **in this exact order** (File → Open SQL Script → press the ⚡ button):
 
 1. `database/schema.sql`
-2. `database/procedures.sql`
+2. `database/procedure.sql`
 3. `database/views.sql`
 4. `database/seed.sql`
+5. `database/demo_extras.sql` (optional: adds cards, fixed deposits and a loan so those screens have data)
 
 > Warning: `schema.sql` drops and recreates `bank_db`. Never run it on data you want to keep.
 
@@ -83,16 +87,43 @@ Start the server:
 ```
 npm run dev
 ```
-Open http://localhost:5000/health. You should see JSON with two branches.
+Open http://localhost:5001/health. (Port 5001, because macOS uses 5000 for AirPlay.) You should see JSON with two branches.
+
+
+### Optional: run MySQL inside the project folder
+
+If you would rather not install or run MySQL as a system service, this script keeps the whole
+database (data, socket, logs, temp files) in `./.local` and listens on port **3307**:
+
+```
+scripts/dev-db.sh init     # first time: creates it, loads every SQL file, sets test passwords
+scripts/dev-db.sh start    # later sessions
+scripts/dev-db.sh stop
+scripts/dev-db.sh reset    # wipe bank_db and reload the SQL files
+```
+Then use `DATABASE_URL="mysql://bank_app:ChangeMe_App_1@localhost:3307/bank_db"` in `backend/.env`.
+It needs the `mysqld` binary (for example `brew install mysql`) but never starts the system service.
+
+## 4b. Run the portals
+
+From the project root (one install covers both portals, they share `shared/`):
+```
+npm install
+npm run user      # customer portal  http://localhost:5173
+npm run admin     # employee portal  http://localhost:5174
+```
+The backend must be running too (`cd backend && npm run dev`). Both portals proxy `/api` to port 5001.
+In development the one-time code is also shown on the sign-in screen
+(`DEV_SHOW_OTP=true` in `backend/.env`); remove that line to only get it from the terminal.
 
 ## 5. Test logins (after step 4)
 
 Every seed user has the password `Test@1234`. During development the OTP is
 **printed in the backend terminal** (look for `[DEV ONLY] OTP ...`).
 
-| Who | Log in with |
+| Who | Log in with (employees use their ID, 1 to 8) |
 |---|---|
-| Customer Vanshika | account no. `1000000001` |
+| Customer Vanshika | account no. `1000000001` (has cards, deposits and a loan after `demo_extras.sql`) |
 | Customer Sushmita | account no. `1000000002` |
 | Customer Adi | account no. `1000000003` |
 | Customer Vishruth | account no. `1000000004` |
