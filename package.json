@@ -1,0 +1,9 @@
+{
+  "name": "banking-db-frontends",
+  "private": true,
+  "workspaces": ["shared", "user", "admin"],
+  "scripts": {
+    "user": "npm run dev -w user",
+    "admin": "npm run dev -w admin"
+  }
+}
