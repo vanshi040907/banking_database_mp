@@ -27,8 +27,13 @@ banking_db/
 │   │   └── wrap.js
 │   └── scripts/
 │       └── set-test-passwords.js
-├── user/                              # planned React customer portal
-└── admin/                             # planned React employee portal
+├── shared/                            # design system used by both portals (theme, components, artwork)
+├── user/                              # React customer portal (Vite + Tailwind)
+├── admin/                             # React employee portal (Vite + Tailwind)
+├── design/art-source/                 # original ballpoint-pen illustrations
+├── scripts/dev-db.sh                  # optional: MySQL kept inside the project folder (macOS/Linux)
+├── package.json                       # npm workspace root for shared, user and admin
+└── .gitignore
 ```
 The structure above reflects files discussed or implemented so far; verify that `routes/customer.js` and `controllers/customerController.js` are committed before teammates try those endpoints. The React folders may not exist yet.
 1. Prerequisites
@@ -179,6 +184,27 @@ GET `/api/customer/accounts/1000000001/transactions?page=1&limit=10` with custom
 This endpoint uses `v_transaction_history`, returns credits/debits from the selected account's perspective, verifies account ownership, and supports pagination. Test it before marking it complete. Using customer 1's JWT to request account `1000000002` should return 404, not another customer's history.
 Basic permission test
 GET `/api/test/freeze-permission` with an employee JWT. A manager has `FREEZE_ACCOUNT`; a cashier does not. This is a temporary test route and should be removed or restricted before deployment.
+5b. Run the frontend portals
+Both portals are React apps (Vite + Tailwind) that share one design system in `shared/`. They call the backend through a dev proxy, so **start the backend first** (section 4) and keep MySQL running.
+
+From the **project root** (not `backend/`):
+```powershell
+npm install        # once; installs shared, user and admin together
+npm run user       # customer portal  -> http://localhost:5173
+npm run admin      # employee portal  -> http://localhost:5174
+```
+Run each portal in its own terminal. The portals proxy `/api` to `http://localhost:5000`. If your backend uses another `PORT`, set `API_URL` before starting:
+```powershell
+$env:API_URL="http://localhost:5001"; npm run user
+```
+(macOS/Linux: `API_URL=http://localhost:5001 npm run user`.)
+
+Sign in with the seed accounts (password `Test@1234` after `node scripts/set-test-passwords.js`): customers use account numbers `1000000001` to `1000000004`, employees use IDs `1` to `8`. The six-digit OTP is printed in the **backend terminal**, as in section 5. If an account still has a temporary password, the portal asks for a new one (12 to 72 characters) and then you sign in again.
+
+What works today: sign-in with OTP, forced and voluntary password change, and the customer accounts overview and account details. Everything the backend does not offer yet is shown as a "Coming soon" page (customer: transfers, cards, deposits, loans, transaction history; employee: accounts, customers, cash counter, transactions, plain-English search, staff, audit log). The backend does not return names or roles yet, so greetings are generic and the staff menu is the same for every role.
+
+Optional, macOS/Linux: `scripts/dev-db.sh init` starts a MySQL server whose data lives in the git-ignored `.local/` folder (port 3307, no system service) and loads the SQL files; use `scripts/dev-db.sh start` and `stop` afterwards, and put port 3307 in `DATABASE_URL`.
+
 6. Permissions and business rules
 Employees have one role each. Roles are mapped to permissions through `role_permission`.
 Backend endpoints must check the employee's permission and branch scope. By default, employees access only their own branch unless they have `ACCESS_ALL_BRANCHES`.
@@ -197,7 +223,7 @@ Build customer transfer APIs using `sp_transfer`, including account-number and m
 Implement primary-account selection, savings summaries, and recent/frequent payees.
 Build employee APIs for customer registration, customer-detail updates, cash operations, account management, and audit logging.
 Add branch-scoped authorization and complete security/concurrency tests.
-Build React customer (`user/`) and employee (`admin/`) portals.
+Replace the "Coming soon" pages in the portals with real screens as each backend endpoint is added (transfers, history, cards, deposits, loans, and all employee screens).
 Add validated, read-only plain-English-to-SQL search and later OTP delivery integration.
 8. Team collaboration workflow
 Before starting work
