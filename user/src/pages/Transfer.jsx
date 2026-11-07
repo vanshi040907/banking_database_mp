@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Alert, Button, Card, Field, Input, PageHeader } from '@shared/ui.jsx';
 import { createUpiLink } from '../upi.js';
+import SandboxPhonePayout from './SandboxPhonePayout.jsx';
 
 export default function Transfer() {
   const [vpa, setVpa] = useState('');
@@ -27,5 +28,6 @@ export default function Transfer() {
       </form>
     </Card>
     <Alert tone="info" className="mt-4">Choose an installed UPI app, such as Google Pay, PhonePe or Paytm. Check the recipient and status in that app. This portal cannot verify the payment or update your bank balance.</Alert>
+    <SandboxPhonePayout />
   </div>;
 }

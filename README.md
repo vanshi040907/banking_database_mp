@@ -261,13 +261,19 @@ Prisma relation name error	Compare controller relation names with the actual `pr
 `db pull` warns about check constraints	MySQL still enforces them; warning is informational
 10. Project limitations
 This is an educational prototype, not a production banking system. Use fictional test data only. Authentication, permissions, financial transaction integrity, input validation, audit logging, and operational security require further review before any real-world use.
-### Cashfree Payouts sandbox (in progress)
+### Cashfree phone payouts (sandbox only)
 
-The sandbox-only client in `backend/services/cashfreeSandbox.js` is a foundation for phone payouts; it is not yet connected to customer routes or the portal. It never updates account balances. Cashfree credentials belong in `backend/.env.cashfree` (ignored by Git):
+The customer Send money screen can submit a **test** phone payout to Cashfree and check its status. This uses the Cashfree Payouts test environment and test data only; it does not debit or credit this project's accounts. The UPI app handoff is separate and its status cannot be verified by Cashfree. Do not use this integration for real money.
 
-```text
-CASHFREE_CLIENT_ID=your_test_client_id
-CASHFREE_CLIENT_SECRET=your_test_client_secret
-```
+1. Configure the existing MySQL database and `backend/.env` as above. Run `database/02_cashfree_sandbox.sql` against the existing `bank_db` database in MySQL Workbench. This adds a table without resetting existing tables. Do **not** re-run `schema.sql` on a database containing data you want to keep.
+2. Add Payouts test credentials to the Git-ignored `backend/.env.cashfree`:
 
-From `backend`, run `node scripts/check-cashfree.js` to check sandbox authentication without printing the keys. Run `node --test tests/cashfreeSandbox.test.js` for the isolated client tests. A successful authentication check does not test a payout. Production payments and provider-backed status verification still require implementation and validation.
+   ```dotenv
+   CASHFREE_CLIENT_ID=your_test_client_id
+   CASHFREE_CLIENT_SECRET=your_test_client_secret
+   ```
+
+3. Configure the Cashfree Payouts test account's [IP allowlist or public key authentication](https://www.cashfree.com/docs/payouts/payouts/integrations/payouts-2fa). The current implementation supports IP allowlisting. Run `node scripts/check-cashfree.js` from `backend` to check sandbox authentication without printing keys.
+4. Start the backend and customer portal, sign in as a customer and open Send money. Use only [Cashfree test data](https://www.cashfree.com/docs/payouts/payouts/integrations/data-to-test). A test submission is stored with a stable ID. If its outcome is unknown, retry with the same details to recover that ID and check its status; do not assume payment succeeded.
+
+The backend never sends a request to Cashfree's production endpoint. Live payouts would require provider activation, appropriate authorization, a real funds/ledger design and additional end-to-end testing.
