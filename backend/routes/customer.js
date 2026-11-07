@@ -15,8 +15,8 @@ const router = Router();
 
 router.use(verifyJWT, requireCustomer, requirePasswordChanged);
 
-router.post('/sandbox-phone-payouts', pinRateLimiter, createSandboxPayout);
-router.get('/sandbox-phone-payouts/:id', getSandboxPayout);
+router.post('/sandbox-upi-payouts', pinRateLimiter, createSandboxPayout);
+router.get('/sandbox-upi-payouts/:id', getSandboxPayout);
 router.get('/accounts', getMyAccounts);
 router.get('/accounts/:accNo/transactions', getAccountTransactions);
 router.post('/transfers', pinRateLimiter, createTransfer);

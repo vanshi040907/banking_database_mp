@@ -7,6 +7,7 @@ function validate(p) {
   if (!p || typeof p.requestId !== 'string' || !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(p.requestId) ||
       typeof p.amount !== 'string' || !/^(?:0|[1-9]\d{0,8})(?:\.\d{1,2})?$/.test(p.amount) || Number(p.amount) < 1 ||
       typeof p.name !== 'string' || !/^[A-Za-z ]{1,100}$/.test(p.name) || !p.name.trim() ||
+      typeof p.vpa !== 'string' || !/^[A-Za-z0-9][A-Za-z0-9._-]{1,255}@[A-Za-z0-9][A-Za-z0-9.-]{1,63}$/.test(p.vpa) ||
       typeof p.phone !== 'string' || !/^\d{10}$/.test(p.phone) || typeof p.email !== 'string' || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(p.email)) throw error('INVALID', 'Invalid payout details');
 }
 export function createSandboxPayoutService({ store, client }) {
@@ -14,7 +15,7 @@ export function createSandboxPayoutService({ store, client }) {
     async create(customerId, input) {
       validate(input);
       const id = 'p' + sha(`${customerId}:${input.requestId.toLowerCase()}`).slice(0, 31);
-      const fingerprint = sha(JSON.stringify([input.amount, input.name, input.phone, input.email]));
+      const fingerprint = sha(JSON.stringify([input.amount, input.name, input.phone, input.email, input.vpa]));
       const reserved = await store.reserve({ id, customerId, fingerprint, status: 'UNKNOWN' });
       if (!reserved) {
         const record = await store.find(id);
@@ -22,7 +23,7 @@ export function createSandboxPayoutService({ store, client }) {
         return { id, status: record.status };
       }
       let status = 'UNKNOWN';
-      try { const result = await client.sendPhone({ transferId: id, amount: input.amount, name: input.name, phone: input.phone, email: input.email }); status = ['SUCCESS', 'PENDING'].includes(result.status) ? 'PENDING' : 'UNKNOWN'; } catch { /* A submission outcome may be uncertain. */ }
+      try { const result = await client.sendUpi({ transferId: id, amount: input.amount, name: input.name, phone: input.phone, email: input.email, vpa: input.vpa }); status = ['SUCCESS', 'PENDING', 'RECEIVED'].includes(result.status) ? 'PENDING' : 'UNKNOWN'; } catch { /* A submission outcome may be uncertain. */ }
       await store.update(id, status);
       return { id, status };
     },
@@ -31,9 +32,10 @@ export function createSandboxPayoutService({ store, client }) {
       const record = await store.find(id);
       if (!record || Number(record.customerId) !== Number(customerId)) throw error('NOT_FOUND', 'Payout not found');
       const result = await client.status(id);
-      const status = safeStatus(result?.data?.transfer?.status);
+      const status = result?.status === 'SUCCESS' && result?.status_code !== 'COMPLETED' ? 'PENDING' : safeStatus(result?.status);
       await store.update(id, status);
-      return { id, status };
+      const reasonCode = typeof result?.status_code === 'string' && /^[A-Z0-9_]{1,80}$/.test(result.status_code) ? result.status_code : undefined;
+      return { id, status, reasonCode };
     }
   };
 }

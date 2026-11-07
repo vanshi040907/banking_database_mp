@@ -1,55 +1,32 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createCashfreeClient } from '../services/cashfreeSandbox.js';
-
-test('submits a phone payout to the sandbox with a stable transfer ID', async () => {
-  const calls = [];
-  const fetcher = async (url, options) => {
-    calls.push({ url, options });
-    return { ok: true, json: async () => calls.length === 1
-      ? { status: 'SUCCESS', data: { token: 'test-token' } }
-      : { status: 'PENDING', subCode: '201', data: { referenceId: '1' } } };
-  };
-  const client = createCashfreeClient({ clientId: 'id', clientSecret: 'secret', fetcher });
-  const result = await client.sendPhone({ transferId: 'test_123', amount: '10.00', name: 'Test User', phone: '9000000001', email: 'test@example.com' });
-  assert.equal(result.status, 'PENDING');
-  assert.equal(calls[1].url, 'https://payout-gamma.cashfree.com/payout/v1.2/directTransfer');
-  const body = JSON.parse(calls[1].options.body);
-  assert.equal(body.transferId, 'test_123');
-  assert.equal(body.transferMode, 'phone');
-  assert.equal(body.beneDetails.phone, '9000000001');
+const input = { transferId: 'test_123', amount: '10.00', name: 'Test User', phone: '9999999999', email: 'test@example.com', vpa: 'success@upi' };
+test('submits UPI payout using sandbox V2 and stable transfer ID', async () => {
+  let call;
+  const client = createCashfreeClient({ clientId: 'id', clientSecret: 'secret', fetcher: async (url, options) => { call = { url, options }; return { ok: true, json: async () => ({ status: 'RECEIVED' }) }; } });
+  assert.equal((await client.sendUpi(input)).status, 'RECEIVED');
+  assert.equal(call.url, 'https://sandbox.cashfree.com/payout/transfers');
+  assert.equal(call.options.headers['x-api-version'], '2024-01-01');
+  const body = JSON.parse(call.options.body);
+  assert.equal(body.transfer_id, 'test_123'); assert.equal(body.transfer_mode, 'upi');
+  assert.equal(body.beneficiary_details.beneficiary_instrument_details.vpa, 'success@upi');
 });
-
-test('network failure after submission is reported as unknown, without retry', async () => {
+test('unknown submission result is never automatically retried', async () => {
   let calls = 0;
-  const client = createCashfreeClient({ clientId: 'id', clientSecret: 'secret', fetcher: async () => {
-    if (++calls === 1) return { ok: true, json: async () => ({ status: 'SUCCESS', data: { token: 't' } }) };
-    throw new Error('timeout');
-  }});
-  await assert.rejects(client.sendPhone({ transferId: 'test_123', amount: '10.00', name: 'Test User', phone: '9000000001', email: 'test@example.com' }), { code: 'UNKNOWN_OUTCOME' });
-  assert.equal(calls, 2);
+  const client = createCashfreeClient({ clientId: 'id', clientSecret: 'secret', fetcher: async () => { calls++; throw new Error('timeout'); } });
+  await assert.rejects(client.sendUpi(input), { code: 'UNKNOWN_OUTCOME' }); assert.equal(calls, 1);
 });
-
-test('checks sandbox credentials without revealing the token', async () => {
-  const client = createCashfreeClient({ clientId: 'id', clientSecret: 'secret', fetcher: async () => ({ ok: true, json: async () => ({ status: 'SUCCESS', data: { token: 'secret-token' } }) }) });
-  assert.deepEqual(await client.checkConnection(), { connected: true });
+test('fetches status by original transfer ID', async () => {
+  let url; const client = createCashfreeClient({ clientId:'id', clientSecret:'secret', fetcher: async value => { url = value; return { ok:true, json:async () => ({ status:'SUCCESS' }) }; } });
+  assert.equal((await client.status('test_123')).status, 'SUCCESS');
+  assert.equal(new URL(url).searchParams.get('transfer_id'), 'test_123');
 });
-
-test('fetches status using the original transfer ID', async () => {
-  let requestedUrl;
-  const client = createCashfreeClient({ clientId: 'id', clientSecret: 'secret', fetcher: async (url) => {
-    if (url.endsWith('/authorize')) return { ok: true, json: async () => ({ status: 'SUCCESS', data: { token: 't' } }) };
-    requestedUrl = url;
-    return { ok: true, json: async () => ({ status: 'SUCCESS', data: { transfer: { status: 'PENDING' } } }) };
-  }});
-  const result = await client.status('test_123');
-  assert.equal(new URL(requestedUrl).searchParams.get('transferId'), 'test_123');
-  assert.equal(result.data.transfer.status, 'PENDING');
+test('rejects invalid UPI requests without contacting provider', async () => {
+  let called = false; const client = createCashfreeClient({ clientId:'id', clientSecret:'secret', fetcher: async () => { called = true; } });
+  await assert.rejects(client.sendUpi({ ...input, vpa:'not-an-id' })); assert.equal(called, false);
 });
-
-test('rejects invalid phone requests before contacting Cashfree', async () => {
-  let called = false;
-  const client = createCashfreeClient({ clientId: 'id', clientSecret: 'secret', fetcher: async () => { called = true; } });
-  await assert.rejects(client.sendPhone({ transferId: 'bad/id', amount: '0', name: '', phone: '123', email: '' }));
-  assert.equal(called, false);
+test('phone payouts fail closed while provider API is unavailable', async () => {
+  let called = false; const client = createCashfreeClient({ clientId:'id', clientSecret:'secret', fetcher: async () => { called = true; } });
+  await assert.rejects(client.sendPhone(input), { code:'UNAVAILABLE' }); assert.equal(called, false);
 });
