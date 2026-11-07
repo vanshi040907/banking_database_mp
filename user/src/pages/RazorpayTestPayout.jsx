@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { api, useApi } from '@shared/api.js';
 import { Alert, Button, Card, Field, Input } from '@shared/ui.jsx';
 const storageKey='bank.razorpay-test-payout';
@@ -32,7 +33,7 @@ export default function RazorpayTestPayout() {
       <Field label="Transaction PIN"><Input type="password" value={pin} onChange={e=>setPin(e.target.value)} inputMode="numeric" maxLength={6} autoComplete="off" required /></Field>
       <Button type="submit" disabled={busy}>Send test payout</Button>
     </form> : <div className="space-y-3"><p>Request: {request.idempotencyKey}</p><p>Status: {result?.state || 'Not confirmed'}</p><p className="text-sm">If the status cannot be confirmed, contact the administrator before trying again. An unknown result does not mean the payout failed.</p><Button type="button" disabled={busy} onClick={check}>Check status</Button>{['PROCESSED','RELEASED'].includes(result?.state) && <Button type="button" onClick={clear}>Make another test payout</Button>}</div>}
-    {error && <Alert>{error}</Alert>}
+    {error && <Alert>{error}{error === 'Set up a transaction PIN first' && <> <Link to="/security" className="underline">Go to Security to set up a PIN</Link></>}</Alert>}
     {history.data?.payouts?.length > 0 && <div className="mt-6"><h3 className="font-semibold">Recent test payouts</h3>{history.data.payouts.map(item => <div key={item.requestId} className="mt-2 text-sm"><span>{item.recipient} · ₹{(item.amountPaise / 100).toFixed(2)} · {item.state}</span> <button type="button" className="underline" onClick={() => { const savedRequest={idempotencyKey:item.requestId}; try { sessionStorage.setItem(storageKey,JSON.stringify(savedRequest)); setRequest(savedRequest); setResult(item); } catch { setError('Session storage is unavailable.'); } }}>View</button></div>)}</div>}
   </Card>;
 }
