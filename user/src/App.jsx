@@ -7,6 +7,7 @@ import Login from './pages/Login.jsx';
 import Dashboard from './pages/Dashboard.jsx';
 import AccountDetail from './pages/AccountDetail.jsx';
 import Security from './pages/Security.jsx';
+import Transfer from './pages/Transfer.jsx';
 import { SOON } from './soon.js';
 
 export default function App() {
@@ -19,6 +20,7 @@ export default function App() {
         <Route index element={<Dashboard />} />
         <Route path="accounts/:acc" element={<AccountDetail />} />
         <Route path="security" element={<Security />} />
+        <Route path="transfer" element={<Transfer />} />
         {Object.values(SOON).map((s) => <Route key={s.path} path={s.path.slice(1)} element={<ComingSoon {...s} />} />)}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>
