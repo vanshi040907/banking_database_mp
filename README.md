@@ -261,6 +261,9 @@ Prisma relation name error	Compare controller relation names with the actual `pr
 `db pull` warns about check constraints	MySQL still enforces them; warning is informational
 10. Project limitations
 This is an educational prototype, not a production banking system. Use fictional test data only. Authentication, permissions, financial transaction integrity, input validation, audit logging, and operational security require further review before any real-world use.
+### Google Pay card checkout demo
+
+The customer Send money page also includes a Google Pay **TEST** card checkout with Google's example gateway and a fixed $19.99 USD amount. It does not charge a card, send the returned test payment data to the backend, or update account balances. This is a card demo, not a UPI or phone-number transfer. The button depends on Google Pay availability in the browser. Real checkout needs a supported processor, merchant configuration, server-side processing and Google's production approval.
 ### UPI app handoff
 
 The customer Send money screen constructs a UPI request using a recipient's UPI ID, name, and amount, and opens a compatible UPI app on the user's device. The user verifies and authorizes the payment in that app. The portal cannot independently verify its result or update its account balances. A UPI ID is required; phone-number payments are not supported. Browser and device support varies.
