@@ -9,14 +9,11 @@ import { getMyAccounts, getAccountTransactions } from '../controllers/customerCo
 import { createTransfer } from '../controllers/transferController.js';
 import { setupTransactionPin, changeTransactionPin} from '../controllers/transactionPinController.js';
 import { pinRateLimiter } from '../middleware/pinRateLimiter.js';
-import { createSandboxPayout, getSandboxPayout } from '../controllers/sandboxPayoutController.js';
 
 const router = Router();
 
 router.use(verifyJWT, requireCustomer, requirePasswordChanged);
 
-router.post('/sandbox-upi-payouts', pinRateLimiter, createSandboxPayout);
-router.get('/sandbox-upi-payouts/:id', getSandboxPayout);
 router.get('/accounts', getMyAccounts);
 router.get('/accounts/:accNo/transactions', getAccountTransactions);
 router.post('/transfers', pinRateLimiter, createTransfer);

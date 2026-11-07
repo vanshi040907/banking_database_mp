@@ -261,20 +261,9 @@ Prisma relation name error	Compare controller relation names with the actual `pr
 `db pull` warns about check constraints	MySQL still enforces them; warning is informational
 10. Project limitations
 This is an educational prototype, not a production banking system. Use fictional test data only. Authentication, permissions, financial transaction integrity, input validation, audit logging, and operational security require further review before any real-world use.
-### Cashfree UPI payouts (sandbox only)
+### UPI app handoff
 
-The customer Send money screen can submit a **test** UPI-ID payout to Cashfree and check its status. This uses the Cashfree Payouts V2 test environment and test data only; it does not debit or credit this project's accounts. The UPI app handoff is separate and its status cannot be verified by Cashfree. Do not use this integration for real money.
+The customer Send money screen constructs a UPI request using a recipient's UPI ID, name, and amount, and opens a compatible UPI app on the user's device. The user verifies and authorizes the payment in that app. The portal cannot independently verify its result or update its account balances. A UPI ID is required; phone-number payments are not supported. Browser and device support varies.
 
-1. Configure the existing MySQL database and `backend/.env` as above. Run `database/02_cashfree_sandbox.sql` against the existing `bank_db` database in MySQL Workbench. This adds a table without resetting existing tables. Do **not** re-run `schema.sql` on a database containing data you want to keep.
-2. Add Payouts test credentials to the Git-ignored `backend/.env.cashfree`:
-
-   ```dotenv
-   CASHFREE_CLIENT_ID=your_test_client_id
-   CASHFREE_CLIENT_SECRET=your_test_client_secret
-   ```
-
-3. Configure the Cashfree Payouts test account's [IP allowlist or public key authentication](https://www.cashfree.com/docs/payouts/payouts/integrations/payouts-2fa). The current implementation supports IP allowlisting. Run `node scripts/check-cashfree.js` from `backend` to check sandbox authentication without printing keys.
-4. Start the backend and customer portal, sign in as a customer and open Send money. Use only [Cashfree test data](https://www.cashfree.com/docs/payouts/payouts/integrations/data-to-test). A test submission is stored with a stable ID. If its outcome is unknown, retry with the same details to recover that ID and check its status; do not assume payment succeeded.
-
-Cashfree has retired the phone payout API used by the earlier implementation; phone-number payouts are unavailable until Cashfree provides a supported API. The backend never sends a request to Cashfree's production endpoint. Live payouts would require provider activation, appropriate authorization, a real funds/ledger design and additional end-to-end testing.
+The earlier Cashfree sandbox files are retained for reference but their routes and user interface are disabled.
 For the initialized Windows development copy, start the local database, backend and customer portal from the repository root with `pwsh -NoProfile -File scripts/start-local-windows.ps1`. The portal is at `http://127.0.0.1:5173/`. The isolated database uses port 3307. The seed accounts use the development password from `backend/scripts/set-test-passwords.js`; login OTPs are printed in `.local/backend.stdout.log` because the project does not send SMS.
