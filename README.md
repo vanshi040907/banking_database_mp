@@ -261,3 +261,13 @@ Prisma relation name error	Compare controller relation names with the actual `pr
 `db pull` warns about check constraints	MySQL still enforces them; warning is informational
 10. Project limitations
 This is an educational prototype, not a production banking system. Use fictional test data only. Authentication, permissions, financial transaction integrity, input validation, audit logging, and operational security require further review before any real-world use.
+### Cashfree Payouts sandbox (in progress)
+
+The sandbox-only client in `backend/services/cashfreeSandbox.js` is a foundation for phone payouts; it is not yet connected to customer routes or the portal. It never updates account balances. Cashfree credentials belong in `backend/.env.cashfree` (ignored by Git):
+
+```text
+CASHFREE_CLIENT_ID=your_test_client_id
+CASHFREE_CLIENT_SECRET=your_test_client_secret
+```
+
+From `backend`, run `node scripts/check-cashfree.js` to check sandbox authentication without printing the keys. Run `node --test tests/cashfreeSandbox.test.js` for the isolated client tests. A successful authentication check does not test a payout. Production payments and provider-backed status verification still require implementation and validation.
