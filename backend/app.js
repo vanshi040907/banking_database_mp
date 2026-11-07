@@ -1,4 +1,5 @@
 import 'dotenv/config';
+import './services/razorpayConfig.js';
 import express from 'express';
 import cors from 'cors';
 import { prisma } from './db.js';

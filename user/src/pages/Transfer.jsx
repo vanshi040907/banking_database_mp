@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Alert, Button, Card, Field, Input, PageHeader } from '@shared/ui.jsx';
 import { createUpiLink } from '../upi.js';
 import GooglePayDemo from './GooglePayDemo.jsx';
+import RazorpayTestPayout from './RazorpayTestPayout.jsx';
 
 export default function Transfer() {
   const [vpa, setVpa] = useState('');
@@ -17,10 +18,11 @@ export default function Transfer() {
     } catch (err) { setError(err.message); }
   }
   return <div className="max-w-xl">
-    <PageHeader title="Pay with UPI" subtitle="Open a UPI app on your device to complete a payment." />
+    <PageHeader title="Pay with UPI" subtitle="Send a test payout to a UPI ID from this site." />
+    <RazorpayTestPayout />
     <Card className="p-6">
       <form onSubmit={openPayment} className="space-y-4">
-        <Field label="Recipient UPI ID" hint="Enter the recipient’s UPI ID, for example name@bank."><Input value={vpa} onChange={e => setVpa(e.target.value)} autoComplete="off" required /></Field>
+        <Field label="Recipient UPI ID" hint="Enter the recipientâ€™s UPI ID, for example name@bank."><Input value={vpa} onChange={e => setVpa(e.target.value)} autoComplete="off" required /></Field>
         <Field label="Recipient name"><Input value={name} onChange={e => setName(e.target.value)} maxLength={100} required /></Field>
         <Field label="Amount (INR)"><Input value={amount} onChange={e => setAmount(e.target.value)} inputMode="decimal" required /></Field>
         <Alert>{error}</Alert>
@@ -28,7 +30,7 @@ export default function Transfer() {
       </form>
     </Card>
     <Alert tone="info" className="mt-4">Choose an installed UPI app, such as Google Pay, PhonePe or Paytm. Check the recipient and status in that app. This portal cannot verify the payment or update your bank balance.</Alert>
-    <p className="mt-4 text-[14px] text-ink-500">This requires the recipient’s UPI ID. Phone-number payments are not available in this portal.</p>
+    <p className="mt-4 text-[14px] text-ink-500">This requires the recipientâ€™s UPI ID. Phone-number payments are not available in this portal.</p>
     <GooglePayDemo />
   </div>;
 }

@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import razorpayTestPayouts from './razorpayTestPayouts.js';
 import {
   verifyJWT,
   requireCustomer,
@@ -14,6 +15,7 @@ const router = Router();
 
 router.use(verifyJWT, requireCustomer, requirePasswordChanged);
 
+router.use('/test-upi-payouts', razorpayTestPayouts);
 router.get('/accounts', getMyAccounts);
 router.get('/accounts/:accNo/transactions', getAccountTransactions);
 router.post('/transfers', pinRateLimiter, createTransfer);
