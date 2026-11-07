@@ -42,3 +42,47 @@ SELECT a.acc_no, a.branch_ifsc, b.branch_name, t.type_name, a.balance,
 FROM account a
 JOIN branch       b ON b.ifsc_code = a.branch_ifsc
 JOIN account_type t ON t.type_id   = a.type_id;
+
+CREATE OR REPLACE VIEW v_customer_account_summary AS
+SELECT a.cust_id,a.acc_no,a.branch_ifsc,b.branch_name,t.type_name,
+       a.balance,a.status,a.is_primary,a.creation_date
+FROM account a JOIN branch b ON b.ifsc_code=a.branch_ifsc
+JOIN account_type t ON t.type_id=a.type_id;
+
+CREATE OR REPLACE VIEW v_fd_overview AS
+SELECT f.fd_id,f.cust_id,f.linked_acc_no,f.branch_ifsc,f.amount AS principal,
+ f.int_rate_fd,f.duration_months,f.start_date,
+ DATE_ADD(f.start_date,INTERVAL f.duration_months MONTH) AS maturity_date,
+ ROUND(f.amount*f.int_rate_fd*f.duration_months/1200,2) AS estimated_simple_interest,
+ f.status,f.payout_type
+FROM fixed_deposit f;
+
+CREATE OR REPLACE VIEW v_loan_overview AS
+SELECT l.loan_id,l.cust_id,l.branch_ifsc,l.loantype,l.principle_amt AS principal,
+ l.int_rate,l.tenure_months,l.outstanding_amount,l.status,l.approved_by,
+ COUNT(e.emi_id) AS scheduled_emis,
+ COALESCE(SUM(CASE WHEN e.status='PAID' THEN 1 ELSE 0 END),0) AS paid_emis,
+ COALESCE(SUM(CASE WHEN e.status IN ('PENDING','OVERDUE') THEN e.emi_amount ELSE 0 END),0) AS remaining_scheduled_emis
+FROM loan l LEFT JOIN loan_emi_schedule e ON e.loan_id=l.loan_id
+GROUP BY l.loan_id,l.cust_id,l.branch_ifsc,l.loantype,l.principle_amt,
+ l.int_rate,l.tenure_months,l.outstanding_amount,l.status,l.approved_by;
+
+CREATE OR REPLACE VIEW v_branch_monthly_activity AS
+SELECT a.branch_ifsc,DATE_FORMAT(t.trans_date,'%Y-%m') AS activity_month,
+ COUNT(*) AS ledger_entries,
+ SUM(CASE WHEN t.to_acc_no=a.acc_no THEN t.amount ELSE 0 END) AS incoming_amount,
+ SUM(CASE WHEN t.from_acc_no=a.acc_no THEN t.amount ELSE 0 END) AS outgoing_amount
+FROM bank_transaction t
+JOIN account a ON a.acc_no=t.from_acc_no OR a.acc_no=t.to_acc_no
+WHERE t.trans_status='SUCCESS'
+GROUP BY a.branch_ifsc,DATE_FORMAT(t.trans_date,'%Y-%m');
+-- Note: intra-branch transfers count once incoming and once outgoing; not net bank revenue.
+
+CREATE OR REPLACE VIEW v_cashier_daily_activity AS
+SELECT t.initiated_by AS emp_id,DATE(t.trans_date) AS activity_date,
+ COUNT(*) AS cash_transactions,
+ SUM(CASE WHEN t.trans_type='DEPOSIT' THEN t.amount ELSE 0 END) AS total_cash_deposits,
+ SUM(CASE WHEN t.trans_type='WITHDRAWAL' THEN t.amount ELSE 0 END) AS total_cash_withdrawals
+FROM bank_transaction t
+WHERE t.trans_mode='CASH' AND t.trans_status='SUCCESS' AND t.initiated_by IS NOT NULL
+GROUP BY t.initiated_by,DATE(t.trans_date);

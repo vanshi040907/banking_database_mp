@@ -1,13 +1,36 @@
 import { transferMoney } from '../services/transferService.js';
 import { wrap } from '../utils/wrap.js';
+import { PinError } from '../services/transactionPinService.js';
 
 export const createTransfer = wrap(async (req, res) => {
   const {
     fromAccNo,
     toAccNo,
     amount,
-    remarks = ''
+    remarks = '',
+    transactionPin,
+    idempotencyKey
   } = req.body ?? {};
+
+  //validation for the account pin
+
+  if (
+  typeof transactionPin !== 'string' ||
+  !/^\d{6}$/.test(transactionPin)
+) {
+  return res.status(400).json({
+    error: 'A valid 6-digit transaction PIN is required'
+  });
+}
+
+if (
+  typeof idempotencyKey !== 'string' ||
+  !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(idempotencyKey)
+) {
+  return res.status(400).json({
+    error: 'A valid idempotency key is required'
+  });
+}
 
   // Account numbers must be strings to avoid JavaScript
   // precision loss with large BIGINT values.
@@ -54,7 +77,9 @@ export const createTransfer = wrap(async (req, res) => {
       fromAccNo,
       toAccNo,
       amount,
-      remarks
+      remarks,
+      transactionPin,
+      idempotencyKey
     });
 
     res.status(201).json({
@@ -72,10 +97,19 @@ export const createTransfer = wrap(async (req, res) => {
       'You can only send money from your own account',
       'Your account is not active',
       'Receiver account cannot accept money right now',
-      'Cannot transfer to the same account'
+      'Cannot transfer to the same account',
+      'Invalid transfer request',
+      'Idempotency key reused with different transfer details'
     ];
 
     const message = String(err.sqlMessage ?? err.message ?? '');
+
+    if (err instanceof PinError) {
+  return res.status(err.status).json({
+    error: err.message
+  });
+}
+
 
     if (err.sqlState === '45000' && knownErrors.includes(message)) {
       return res.status(400).json({ error: message });

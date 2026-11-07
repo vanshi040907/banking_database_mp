@@ -9,23 +9,24 @@ datasource db {
 
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
 model account {
-  acc_no                                                 BigInt             @id @default(autoincrement()) @db.UnsignedBigInt
+  acc_no                                                 BigInt                   @id @default(autoincrement()) @db.UnsignedBigInt
   cust_id                                                Int
-  branch_ifsc                                            String             @db.Char(11)
+  branch_ifsc                                            String                   @db.Char(11)
   type_id                                                Int
   opened_by                                              Int?
-  balance                                                Decimal            @default(0.00) @db.Decimal(15, 2)
-  creation_date                                          DateTime           @default(dbgenerated("(curdate())")) @db.Date
-  validity                                               DateTime?          @db.Date
-  closed_date                                            DateTime?          @db.Date
-  is_primary                                             Boolean            @default(false)
-  status                                                 account_status     @default(ACTIVE)
-  customer                                               customer           @relation(fields: [cust_id], references: [cust_id], onDelete: NoAction, onUpdate: NoAction, map: "account_ibfk_1")
-  branch                                                 branch             @relation(fields: [branch_ifsc], references: [ifsc_code], onDelete: NoAction, onUpdate: NoAction, map: "account_ibfk_2")
-  account_type                                           account_type       @relation(fields: [type_id], references: [type_id], onDelete: NoAction, onUpdate: NoAction, map: "account_ibfk_3")
-  employee                                               employee?          @relation(fields: [opened_by], references: [emp_id], onDelete: NoAction, onUpdate: NoAction, map: "account_ibfk_4")
-  bank_transaction_bank_transaction_from_acc_noToaccount bank_transaction[] @relation("bank_transaction_from_acc_noToaccount")
-  bank_transaction_bank_transaction_to_acc_noToaccount   bank_transaction[] @relation("bank_transaction_to_acc_noToaccount")
+  balance                                                Decimal                  @default(0.00) @db.Decimal(15, 2)
+  creation_date                                          DateTime                 @default(dbgenerated("(curdate())")) @db.Date
+  validity                                               DateTime?                @db.Date
+  closed_date                                            DateTime?                @db.Date
+  is_primary                                             Boolean                  @default(false)
+  status                                                 account_status           @default(ACTIVE)
+  customer                                               customer                 @relation(fields: [cust_id], references: [cust_id], onDelete: NoAction, onUpdate: NoAction, map: "account_ibfk_1")
+  branch                                                 branch                   @relation(fields: [branch_ifsc], references: [ifsc_code], onDelete: NoAction, onUpdate: NoAction, map: "account_ibfk_2")
+  account_type                                           account_type             @relation(fields: [type_id], references: [type_id], onDelete: NoAction, onUpdate: NoAction, map: "account_ibfk_3")
+  employee                                               employee?                @relation(fields: [opened_by], references: [emp_id], onDelete: NoAction, onUpdate: NoAction, map: "account_ibfk_4")
+  account_transaction_pin                                account_transaction_pin?
+  bank_transaction_bank_transaction_from_acc_noToaccount bank_transaction[]       @relation("bank_transaction_from_acc_noToaccount")
+  bank_transaction_bank_transaction_to_acc_noToaccount   bank_transaction[]       @relation("bank_transaction_to_acc_noToaccount")
   card                                                   card[]
   fixed_deposit                                          fixed_deposit[]
   loan                                                   loan[]
@@ -395,6 +396,17 @@ model role_permission {
 
   @@id([role_id, perm_id])
   @@index([perm_id], map: "perm_id")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model account_transaction_pin {
+  acc_no          BigInt    @id @db.UnsignedBigInt
+  pin_hash        String    @db.VarChar(255)
+  failed_attempts Int       @default(0)
+  locked_until    DateTime? @db.DateTime(0)
+  created_at      DateTime  @default(now()) @db.Timestamp(0)
+  updated_at      DateTime  @default(now()) @db.Timestamp(0)
+  account         account   @relation(fields: [acc_no], references: [acc_no], onDelete: NoAction, onUpdate: NoAction, map: "fk_transaction_pin_account")
 }
 
 enum fd_payout_payout_kind {
