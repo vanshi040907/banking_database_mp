@@ -67,3 +67,22 @@ export async function listTestPayouts(customerId) {
   const [rows] = await pool.execute('SELECT * FROM razorpay_test_payout WHERE customer_id=? ORDER BY created_at DESC LIMIT 20',[customerId]);
   return rows.map(publicRow);
 }
+
+// Fetch provider state independently; signed event data is a notification, not
+// an instruction to modify balances. Matching and locking occur in reconcile.
+export async function reconcileTestPayoutByReference(reference, payoutId) {
+  if (typeof reference !== 'string' || !/^[0-9a-f-]{36}$/i.test(reference) || typeof payoutId !== 'string' || !/^pout_[A-Za-z0-9]+$/.test(payoutId)) return;
+  const [rows] = await pool.execute('SELECT customer_id, provider_id FROM razorpay_test_payout WHERE request_id=?', [reference]);
+  if (!rows.length || (rows[0].provider_id && rows[0].provider_id !== payoutId)) return;
+  const data = await provider().getPayout(payoutId);
+  await reconcile(rows[0].customer_id, reference, data);
+}
+
+export async function reconcilePendingTestPayouts() {
+  if (process.env.RAZORPAYX_TEST_ENABLED !== 'true') return;
+  const [rows] = await pool.execute("SELECT request_id, provider_id FROM razorpay_test_payout WHERE state='RESERVED' AND provider_id IS NOT NULL ORDER BY updated_at ASC LIMIT 50");
+  for (const row of rows) {
+    try { await reconcileTestPayoutByReference(row.request_id, row.provider_id); }
+    catch { console.error('Unable to refresh a test payout; it remains reserved.'); }
+  }
+}

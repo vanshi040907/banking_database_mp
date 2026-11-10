@@ -7,11 +7,14 @@ import rateLimit from 'express-rate-limit';
 import authRouter from './routes/auth.js';
 import { verifyJWT, requireEmployee, requirePermission, requirePasswordChanged} from './middleware/auth.js';
 import customerRouter from './routes/customer.js';
+import razorpayWebhook from './routes/razorpayWebhook.js';
+import { reconcilePendingTestPayouts } from './services/razorpayPayoutService.js';
 // account numbers are BigInt; JSON can't send BigInt unless we convert it
 BigInt.prototype.toJSON = function () { return this.toString(); };
 
 const app = express();
 app.use(cors());
+app.use('/api/webhooks/razorpayx-test', razorpayWebhook);
 app.use(express.json());
 
 app.get('/health', async (req, res) => {
@@ -43,3 +46,12 @@ app.use((err, req, res, next) => {
 
 const port = process.env.PORT || 5000;
 app.listen(port, process.env.HOST || undefined, () => console.log(`Server running on port ${port}`));
+let reconciling = false;
+const timer = setInterval(async () => {
+  if (reconciling) return;
+  reconciling = true;
+  try { await reconcilePendingTestPayouts(); }
+  catch { console.error('Test payout reconciliation unavailable; will retry.'); }
+  finally { reconciling = false; }
+}, 30_000);
+timer.unref();

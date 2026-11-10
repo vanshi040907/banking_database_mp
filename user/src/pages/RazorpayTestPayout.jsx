@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api, useApi } from '@shared/api.js';
 import { Alert, Button, Card, Field, Input } from '@shared/ui.jsx';
@@ -9,6 +9,18 @@ export default function RazorpayTestPayout() {
   const history=useApi('/customer/test-upi-payouts');
   const [account,setAccount]=useState(''); const [name,setName]=useState(''); const [vpa,setVpa]=useState(''); const [amount,setAmount]=useState(''); const [pin,setPin]=useState('');
   const [request,setRequest]=useState(saved); const [result,setResult]=useState(null); const [error,setError]=useState(''); const [busy,setBusy]=useState(false);
+  useEffect(() => {
+    if (!request?.idempotencyKey || result?.state === 'PROCESSED' || result?.state === 'RELEASED') return;
+    let active = true;
+    const refresh = async () => {
+      try {
+        const next = await api(`/customer/test-upi-payouts/${request.idempotencyKey}`);
+        if (active) setResult(next);
+      } catch { /* The manual status check shows errors; retry on the next interval. */ }
+    };
+    const timer = setInterval(refresh, 10000);
+    return () => { active = false; clearInterval(timer); };
+  }, [request?.idempotencyKey, result?.state]);
   async function submit(e) {
     e.preventDefault(); if (busy || request) return;
     const item={idempotencyKey:crypto.randomUUID(),fromAccNo:account,name,vpa,amount};
