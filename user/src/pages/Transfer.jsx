@@ -56,7 +56,7 @@ export default function Transfer() {
         },
       });
       pendingRequest.current = null;
-      setSuccess('Payment recorded. Transaction #' + result.transactionId + '.');
+      setSuccess('Payment done. Transaction #' + result.transactionId + '.');
       setAmount('');
       reload();
     } catch (requestError) {

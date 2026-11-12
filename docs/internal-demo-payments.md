@@ -9,3 +9,9 @@ For an existing database, run `database/internal_payment_mode.sql` once before s
 The QR contains a URL, so a phone must be able to reach this site for the link to open. A localhost URL works only on the same computer. For phones on a network, deploy the site at a reachable URL and use HTTPS. Never describe the internal alias or QR as an interoperable UPI payment address.
 
 The previous RazorpayX test routes and background polling are no longer mounted in the running app. Test credentials remain in the ignored local configuration file until manually removed. Existing test payout rows are not deleted or migrated by this change.
+
+## Database balances and payment status
+
+Each successful internal payment updates the sender and recipient balances in the `account` table and writes a `SUCCESS` row in `bank_transaction`. The same database transaction also writes a `DONE` row in `internal_payment_attempt`. If an attempted transfer fails a business check or PIN verification, neither balance changes, and an `internal_payment_attempt` row records `FAILED` with a reason. Requests rejected before transfer validation and uncertain server or database errors are not marked as failed payments.
+
+For an existing database, run `database/internal_payment_attempt.sql` once. To inspect current balances and recent outcomes in MySQL Workbench, run `database/payment_status_report.sql`. The `.sql` files are definitions and read-only reports; payment data itself is stored in MySQL tables. The report's balance columns are current balances, not historical snapshots at the moment of each attempt.

@@ -34,6 +34,16 @@ SELECT t.trans_id, t.reference_no, t.trans_date, t.trans_type, t.trans_mode,
 FROM bank_transaction t
 WHERE t.to_acc_no IS NOT NULL;
 
+-- Current balances alongside the outcome of each internal payment attempt.
+CREATE OR REPLACE VIEW v_internal_payment_status AS
+SELECT p.attempt_id, p.reference_no, p.from_acc_no, p.to_acc_no,
+       p.amount, p.status, p.failure_reason, p.transaction_id, p.created_at,
+       sender.balance AS current_sender_balance,
+       recipient.balance AS current_recipient_balance
+FROM internal_payment_attempt p
+LEFT JOIN account sender ON sender.acc_no = p.from_acc_no
+LEFT JOIN account recipient ON recipient.acc_no = p.to_acc_no;
+
 -- Account overview WITHOUT personal information (no names, phones, addresses).
 -- Roles that lack VIEW_PERSONAL_INFO (e.g. Analyst) are served from this view.
 CREATE OR REPLACE VIEW v_account_overview AS

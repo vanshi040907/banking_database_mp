@@ -213,6 +213,25 @@ CREATE TABLE bank_transaction (
     INDEX idx_trans_to   (to_acc_no, trans_date)
 ) ENGINE=InnoDB;
 
+-- One row per internal payment attempt. Failed attempts never change balances.
+CREATE TABLE internal_payment_attempt (
+    attempt_id      BIGINT AUTO_INCREMENT PRIMARY KEY,
+    reference_no    CHAR(36) NOT NULL,
+    customer_id     INT NOT NULL,
+    from_acc_no     VARCHAR(20) NOT NULL,
+    to_acc_no       VARCHAR(20) NOT NULL,
+    amount          DECIMAL(15,2) NOT NULL,
+    status          ENUM('DONE','FAILED') NOT NULL,
+    failure_reason  VARCHAR(255) NULL,
+    transaction_id  BIGINT NULL,
+    created_at      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (customer_id) REFERENCES customer(cust_id),
+    FOREIGN KEY (transaction_id) REFERENCES bank_transaction(trans_id),
+    INDEX idx_payment_attempt_sender (from_acc_no, created_at),
+    INDEX idx_payment_attempt_reference (reference_no),
+    CHECK (amount > 0)
+) ENGINE=InnoDB;
+
 -- ---------------------------------------------------------------------
 -- F. FIXED DEPOSITS
 -- ---------------------------------------------------------------------

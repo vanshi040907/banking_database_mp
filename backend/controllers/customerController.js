@@ -123,6 +123,14 @@ export const getAccountTransactions = wrap(async (req, res) => {
 
   const total = Number(countRows[0].total);
 
+  const failedPayments = await prisma.$queryRaw`
+    SELECT attempt_id, reference_no, to_acc_no, amount, failure_reason, created_at
+    FROM internal_payment_attempt
+    WHERE from_acc_no = ${accNo} AND customer_id = ${custId} AND status = 'FAILED'
+    ORDER BY created_at DESC, attempt_id DESC
+    LIMIT 10
+  `;
+
   // 6. Return formatted response
   res.json({
     accountNumber: accNo,
@@ -132,6 +140,15 @@ export const getAccountTransactions = wrap(async (req, res) => {
       total,
       totalPages: Math.ceil(total / limit)
     },
+    failedPayments: failedPayments.map(payment => ({
+      attemptId: payment.attempt_id.toString(),
+      referenceNumber: payment.reference_no,
+      recipientAccount: payment.to_acc_no,
+      amount: payment.amount.toString(),
+      status: 'FAILED',
+      reason: payment.failure_reason,
+      date: payment.created_at
+    })),
     transactions: transactions.map(t => ({
       transactionId: t.trans_id.toString(),
       referenceNumber: t.reference_no,

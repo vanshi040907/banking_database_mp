@@ -63,6 +63,12 @@ export async function transferMoney(request) {
        VALUES (?, ?, ?, 'TRANSFER', 'INTERNAL', ?, 'SUCCESS', ?)`,
       [idempotencyKey, fromAccNo, toAccNo, amount, remarks]
     );
+    await connection.execute(
+      `INSERT INTO internal_payment_attempt
+       (reference_no, customer_id, from_acc_no, to_acc_no, amount, status, transaction_id)
+       VALUES (?, ?, ?, ?, ?, 'DONE', ?)`,
+      [idempotencyKey, customerId, fromAccNo, toAccNo, amount, insert.insertId]
+    );
     await connection.commit();
     return { transactionId: String(insert.insertId) };
   } catch (error) {
@@ -83,4 +89,13 @@ export async function transferMoney(request) {
   } finally {
     connection.release();
   }
+}
+
+export async function recordFailedTransfer({ customerId, fromAccNo, toAccNo, amount, idempotencyKey, reason }) {
+  await pool.execute(
+    `INSERT INTO internal_payment_attempt
+     (reference_no, customer_id, from_acc_no, to_acc_no, amount, status, failure_reason)
+     VALUES (?, ?, ?, ?, ?, 'FAILED', ?)`,
+    [idempotencyKey, customerId, fromAccNo, toAccNo, amount, String(reason).slice(0, 255)]
+  );
 }

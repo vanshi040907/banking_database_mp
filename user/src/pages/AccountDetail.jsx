@@ -30,7 +30,7 @@ export default function AccountDetail() {
           <h2 className="mb-4 text-[21px]">Transactions</h2>
           {history.error && <ErrorNote onRetry={history.reload}>{history.error}</ErrorNote>}
           {history.loading && !history.data && <Loading />}
-          {history.data?.transactions.length === 0 && <p className="text-[14.5px] text-ink-400">No transactions yet.</p>}
+          {history.data?.transactions.length === 0 && !history.data.failedPayments?.length && <p className="text-[14.5px] text-ink-400">No payments yet.</p>}
           <div className="divide-y divide-line">
             {history.data?.transactions.map(transaction => <div key={transaction.transactionId} className="flex items-start justify-between gap-4 py-3">
               <div>
@@ -44,6 +44,20 @@ export default function AccountDetail() {
               </div>
             </div>)}
           </div>
+          {history.data?.failedPayments?.length > 0 && <div className="mt-6 border-t border-line pt-4">
+            <h3 className="mb-2 font-semibold">Failed payment attempts</h3>
+            {history.data.failedPayments.map(payment => <div key={payment.attemptId} className="flex items-start justify-between gap-4 py-3">
+              <div>
+                <p className="font-medium">To account {payment.recipientAccount}</p>
+                <p className="text-sm text-ink-400">{payment.reason} · {fmtDateTime(payment.date)}</p>
+                <p className="text-xs text-ink-400">Reference {payment.referenceNumber}</p>
+              </div>
+              <div className="text-right">
+                <p className="tnum font-medium">{credits(payment.amount)}</p>
+                <StatusBadge status={payment.status} />
+              </div>
+            </div>)}
+          </div>}
           {history.data?.pagination.totalPages > 1 && <div className="mt-4 flex items-center justify-between gap-3">
             <Button disabled={page <= 1} onClick={() => setPage(page - 1)}>Previous</Button>
             <span className="text-sm">Page {page} of {history.data.pagination.totalPages}</span>
