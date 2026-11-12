@@ -18,7 +18,7 @@ export default function Overview() {
         <Card className="p-6">
           <SectionTitle>Ready now</SectionTitle>
           <ul className="space-y-3.5 text-[15px]">
-            {[['Secure sign-in', 'Employee ID, password and a one-time code'], ['Password change', 'Forced on a temporary password, or any time from Security']].map(([t, d]) => (
+            {[['Secure sign-in', 'Employee ID, password and a one-time code'], ['Password change', 'Forced on a temporary password, or any time from Security'], ['Cards', 'Issue debit and credit cards and set daily limits']].map(([t, d]) => (
               <li key={t} className="flex items-start gap-3"><Check /><div><div className="font-medium text-ink-900">{t}</div><div className="text-[13.5px] text-ink-400">{d}</div></div></li>
             ))}
           </ul>

@@ -6,7 +6,7 @@
 #   scripts/dev-db.sh init     first time: create the data folder, start, load all SQL + test passwords
 #   scripts/dev-db.sh start    start the server        (port 3307)
 #   scripts/dev-db.sh stop     stop it
-#   scripts/dev-db.sh reset    wipe bank_db and reload schema, procedures, views and seed
+#   scripts/dev-db.sh reset    wipe bank_db and reload schema, procedures, views, seed and card permissions
 #   scripts/dev-db.sh sql      open a MySQL prompt on bank_db
 set -euo pipefail
 
@@ -46,7 +46,7 @@ start() {
 }
 
 load_sql() {
-  for f in schema procedure views seed; do
+  for f in schema procedure views seed card_permissions; do
     echo "  running database/$f.sql"
     mysql --defaults-file="$CNF" -uroot < "$ROOT/database/$f.sql"
   done

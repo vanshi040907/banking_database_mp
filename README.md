@@ -54,6 +54,7 @@ In MySQL Workbench, connect to your local MySQL server and execute the following
 `database/procedures.sql`
 `database/views.sql`
 `database/seed.sql`
+`database/card_permissions.sql` (needed for the Cards feature: adds the `ISSUE_CARD` and `UPDATE_CARD_LIMIT` permissions; without it, issuing cards and changing limits returns 403)
 > **WARNING:** `schema.sql` contains `DROP DATABASE IF EXISTS bank_db;`. Re-running it **deletes all data in that database**, including any accounts, transactions, and password changes created during testing. Do not run it on a database containing data you need to preserve. Coordinate schema resets with the team.
 Verify setup in Workbench:
 ```sql
