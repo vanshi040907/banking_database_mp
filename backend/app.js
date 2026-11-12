@@ -1,4 +1,5 @@
 import 'dotenv/config';
+import cardRouter from './routes/card.js';
 import express from 'express';
 import cors from 'cors';
 import { prisma } from './db.js';
@@ -30,7 +31,7 @@ app.use('/api/auth', rateLimit({ windowMs: 15 * 60 * 1000, limit: 30 }), authRou
 app.get('/api/me', verifyJWT, requirePasswordChanged, (req, res) => res.json(req.user));
 
 app.use('/api/customer', customerRouter); 
-
+app.use('/api/employee/cards', cardRouter);
 app.get('/api/test/freeze-permission', verifyJWT, requireEmployee, requirePasswordChanged,
   requirePermission('FREEZE_ACCOUNT'), (req, res) => res.json({ allowed: true }));
 
