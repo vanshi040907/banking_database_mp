@@ -1,8 +1,9 @@
 import { Link } from 'react-router-dom';
 import { useApi } from '@shared/api.js';
 import { Art } from '@shared/Art.jsx';
-import { Badge, Button, Card, ErrorNote, Loading, Money, SectionTitle, StatusBadge } from '@shared/ui.jsx';
-import { greeting, groupAcc, inr, titleCase } from '@shared/format.js';
+import { Badge, Button, Card, ErrorNote, Loading, SectionTitle, StatusBadge } from '@shared/ui.jsx';
+import { greeting, groupAcc, titleCase } from '@shared/format.js';
+import { credits } from '../credits.js';
 
 const Soon = ({ title, text }) => (
   <Card className="border-dashed p-6">
@@ -35,10 +36,10 @@ export default function Dashboard() {
             <Card className="flex flex-wrap items-end justify-between gap-6 p-7">
               <div>
                 <div className="text-[13px] font-medium text-ink-400">Total balance</div>
-                <div className="serif tnum mt-1 text-[52px] leading-none text-ink-900">{inr(total)}</div>
+                <div className="serif tnum mt-1 text-[42px] leading-none text-ink-900">{credits(total)}</div>
                 <div className="mt-2 text-[14px] text-ink-400">Across {data.totalAccounts} account{data.totalAccounts === 1 ? '' : 's'}</div>
               </div>
-              <Link to="/transfer"><Button>Send money</Button></Link>
+              <Link to="/transfer"><Button>Send credits</Button></Link>
             </Card>
 
             <section>
@@ -51,7 +52,7 @@ export default function Dashboard() {
                         <span className="text-[13px] font-medium text-ink-500">{titleCase(a.accountType)}</span>
                         <span className="flex gap-1.5">{a.isPrimary && <Badge tone="violet">Primary</Badge>}{a.status !== 'ACTIVE' && <StatusBadge status={a.status} />}</span>
                       </div>
-                      <Money value={a.balance} className="serif text-[28px] text-ink-900" />
+                      <span className="serif text-[25px] text-ink-900">{credits(a.balance)}</span>
                       <div className="mt-1 text-[13px] text-ink-400 tnum">{groupAcc(a.accountNumber)} · {a.branchName}</div>
                     </Card>
                   </Link>

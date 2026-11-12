@@ -211,12 +211,6 @@ export async function verifyTransferPin({ customerId, accNo, transactionPin }) {
     );
     if (!pins.length) throw new PinError('Set up a transaction PIN first', 409);
     const pin = pins[0];
-    console.log('PIN DEBUG:', {
-  failedAttempts: pin.failed_attempts,
-  type: typeof pin.failed_attempts,
-  isLocked: pin.is_locked,
-  expired: pin.expired
-});
     if (Number(pin.is_locked) ===1) throw new PinError('PIN temporarily locked', 423);
 
     const previousFailures = Number(pin.expired) === 1
@@ -236,7 +230,6 @@ export async function verifyTransferPin({ customerId, accNo, transactionPin }) {
       );
       await connection.commit();
       inTransaction = false;
-      console.log('PIN failure committed:', attempts);
       throw new PinError(attempts >= MAX_ATTEMPTS
         ? 'PIN temporarily locked' : 'Invalid transaction PIN',
         attempts >= MAX_ATTEMPTS ? 423 : 401);

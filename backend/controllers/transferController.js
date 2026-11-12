@@ -111,7 +111,7 @@ if (
 }
 
 
-    if (err.sqlState === '45000' && knownErrors.includes(message)) {
+    if (err.status === 400 || (err.sqlState === '45000' && knownErrors.includes(message))) {
       return res.status(400).json({ error: message });
     }
 

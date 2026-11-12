@@ -192,7 +192,7 @@ CREATE TABLE bank_transaction (
     to_acc_no     BIGINT UNSIGNED NULL,          -- NULL for a withdrawal
     card_id       INT           NULL,
     trans_type    ENUM('DEPOSIT','WITHDRAWAL','TRANSFER') NOT NULL,
-    trans_mode    ENUM('CASH','UPI','NEFT','IMPS','CARD','CHEQUE') NOT NULL,
+    trans_mode    ENUM('CASH','UPI','NEFT','IMPS','CARD','CHEQUE','INTERNAL') NOT NULL,
     amount        DECIMAL(15,2) NOT NULL CHECK (amount > 0),
     trans_date    DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP,
     trans_status  ENUM('SUCCESS','FAILED','PENDING') NOT NULL DEFAULT 'SUCCESS',

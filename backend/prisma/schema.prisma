@@ -459,6 +459,7 @@ enum bank_transaction_trans_mode {
   IMPS
   CARD
   CHEQUE
+  INTERNAL
 }
 
 enum branch_status {
