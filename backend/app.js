@@ -1,4 +1,6 @@
 import 'dotenv/config';
+
+import loanRouter from './routes/loan.js';
 import cardRouter from './routes/card.js';
 import express from 'express';
 import cors from 'cors';
@@ -7,6 +9,10 @@ import rateLimit from 'express-rate-limit';
 import authRouter from './routes/auth.js';
 import { verifyJWT, requireEmployee, requirePermission, requirePasswordChanged} from './middleware/auth.js';
 import customerRouter from './routes/customer.js';
+
+import depositRouter from './routes/deposit.js';
+import fixedDepositRouter from './routes/fixedDeposit.js';
+
 // account numbers are BigInt; JSON can't send BigInt unless we convert it
 BigInt.prototype.toJSON = function () { return this.toString(); };
 
@@ -32,6 +38,14 @@ app.get('/api/me', verifyJWT, requirePasswordChanged, (req, res) => res.json(req
 
 app.use('/api/customer', customerRouter); 
 app.use('/api/employee/cards', cardRouter);
+
+app.use('/api/employee/loans', loanRouter);
+
+// Employee Cash Deposit APIs
+app.use('/api/employee/deposits', depositRouter);
+
+app.use('/api/employee/fixed-deposits', fixedDepositRouter);
+
 app.get('/api/test/freeze-permission', verifyJWT, requireEmployee, requirePasswordChanged,
   requirePermission('FREEZE_ACCOUNT'), (req, res) => res.json({ allowed: true }));
 
