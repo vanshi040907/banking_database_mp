@@ -14,6 +14,7 @@ import employeeRouter from './routes/employee.js';
 import accountRouter from './routes/account.js';
 import cashRouter from './routes/cash.js';
 import transactionRouter from './routes/transaction.js';
+import staffRouter from './routes/staff.js';
 
 const app = express();
 app.use(cors());
@@ -48,6 +49,7 @@ app.use('/api/employee/cards', cardRouter);
 app.use('/api/employee/accounts', accountRouter);
 app.use('/api/employee/cash', cashRouter);
 app.use('/api/employee/transactions', transactionRouter);
+app.use('/api/employee/staff', staffRouter);
 app.use('/api/employee', employeeRouter);
 
 // last: catches any error thrown inside a route

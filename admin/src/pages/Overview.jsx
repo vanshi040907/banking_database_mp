@@ -11,7 +11,7 @@ export default function Overview() {
 
   const upcoming = Object.entries(SOON)
   .filter(([key]) =>
-  !['customers', 'accounts', 'cash', 'transactions'].includes(key) &&
+  !['customers', 'accounts', 'cash', 'transactions', 'staff'].includes(key) &&
   canOpenPage(user, key)
 )
   .map(([, page]) => page);
@@ -59,6 +59,17 @@ if (can(user, 'VIEW_ALL_TRANSACTIONS')) {
     'Browse and filter ledger transactions within your branch scope'
   ]);
 }
+
+if (
+  can(user, 'VIEW_EMPLOYEE_ROLES') ||
+  can(user, 'MANAGE_EMPLOYEES')
+) {
+  ready.push([
+    'Staff',
+    'View employees and perform permitted staff-management actions'
+  ]);
+}
+
   return (
     <div className="soft-in">
       <p className="mb-2 text-[13px] font-medium uppercase tracking-[0.12em] text-violet-600">

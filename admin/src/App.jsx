@@ -12,6 +12,7 @@ import Customers from './pages/Customer.jsx';
 import Accounts from './pages/Accounts.jsx';
 import CashCounter from './pages/CashCounter.jsx';
 import Transactions from './pages/Transactions.jsx';
+import Staff from './pages/Staff.jsx';
 
 import { SOON } from './soon.js';
 import { canOpenPage, pageFeatures } from './access.js';
@@ -70,10 +71,15 @@ export default function App() {
   element={allowed('transactions', <Transactions />)}
 />
 
+<Route
+  path="staff"
+  element={allowed('staff', <Staff />)}
+/>
+
         <Route path="security" element={<Security />} />
 
         {Object.entries(SOON).filter(([key]) =>
-  !['customers', 'accounts', 'cash', 'transactions'].includes(key)
+  !['customers', 'accounts', 'cash', 'transactions', 'staff'].includes(key)
 ).map(([key, page]) => (
           <Route
             key={page.path}
