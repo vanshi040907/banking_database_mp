@@ -11,7 +11,7 @@ export default function Overview() {
 
   const upcoming = Object.entries(SOON)
   .filter(([key]) =>
-  !['customers', 'accounts', 'cash'].includes(key) &&
+  !['customers', 'accounts', 'cash', 'transactions'].includes(key) &&
   canOpenPage(user, key)
 )
   .map(([, page]) => page);
@@ -53,6 +53,12 @@ if (
   ]);
 }
 
+if (can(user, 'VIEW_ALL_TRANSACTIONS')) {
+  ready.push([
+    'Transactions',
+    'Browse and filter ledger transactions within your branch scope'
+  ]);
+}
   return (
     <div className="soft-in">
       <p className="mb-2 text-[13px] font-medium uppercase tracking-[0.12em] text-violet-600">

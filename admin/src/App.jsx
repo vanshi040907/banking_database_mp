@@ -11,6 +11,7 @@ import Cards from './pages/Cards.jsx';
 import Customers from './pages/Customer.jsx';
 import Accounts from './pages/Accounts.jsx';
 import CashCounter from './pages/CashCounter.jsx';
+import Transactions from './pages/Transactions.jsx';
 
 import { SOON } from './soon.js';
 import { canOpenPage, pageFeatures } from './access.js';
@@ -64,10 +65,15 @@ export default function App() {
   element={allowed('cash', <CashCounter />)}
 />
 
+<Route
+  path="transactions"
+  element={allowed('transactions', <Transactions />)}
+/>
+
         <Route path="security" element={<Security />} />
 
         {Object.entries(SOON).filter(([key]) =>
-  !['customers', 'accounts', 'cash'].includes(key)
+  !['customers', 'accounts', 'cash', 'transactions'].includes(key)
 ).map(([key, page]) => (
           <Route
             key={page.path}
