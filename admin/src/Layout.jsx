@@ -5,6 +5,7 @@ import { SOON } from './soon.js';
 
 const Icon = ({ d }) => <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"><path d={d} /></svg>;
 const CARD = 'M2.5 4.5h13a.5.5 0 0 1 .5.5v8a.5.5 0 0 1-.5.5h-13a.5.5 0 0 1-.5-.5V5a.5.5 0 0 1 .5-.5ZM2.5 8h13M5 11.5h3';
+const COIN = 'M9 2.5a6.5 6.5 0 1 0 0 13 6.5 6.5 0 0 0 0-13ZM9 6v6M7 8h3.2a1 1 0 0 1 0 2H7.8';
 const HOME = 'M2.5 8 9 2.5 15.5 8v7a.5.5 0 0 1-.5.5h-3.5V11h-5v4.5H3a.5.5 0 0 1-.5-.5V8Z';
 
 const link = ({ isActive }) => cx('flex items-center gap-3 rounded-lg px-3 py-2.5 text-[14.5px] font-medium transition-colors',
@@ -19,6 +20,9 @@ export default function Layout() {
         <nav className="mt-9 flex flex-1 flex-col gap-0.5 overflow-y-auto" aria-label="Main">
           <NavLink to="/" end className={link}><Icon d={HOME} />Overview</NavLink>
           <NavLink to="/cards" className={link}><Icon d={CARD} />Cards</NavLink>
+          <NavLink to="/loans" className={link}><Icon d={COIN} />Loans</NavLink>
+          <NavLink to="/deposits" className={link}><Icon d={COIN} />Cash deposits</NavLink>
+          <NavLink to="/fixed-deposits" className={link}><Icon d={COIN} />Fixed deposits</NavLink>
           {Object.values(SOON).map((s) => (
             <NavLink key={s.path} to={s.path} className={link}>
               <Icon d={s.icon} />

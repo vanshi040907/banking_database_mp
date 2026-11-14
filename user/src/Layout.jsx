@@ -7,6 +7,8 @@ import { SOON } from './soon.js';
 const NAV = [
   { to: '/', label: 'Overview' },
   { to: '/cards', label: 'Cards' },
+  { to: '/loans', label: 'Loans' },
+  { to: '/deposits', label: 'Deposits' },
   ...Object.values(SOON).map((s) => ({ to: s.path, label: s.label, soon: true })),
 ];
 

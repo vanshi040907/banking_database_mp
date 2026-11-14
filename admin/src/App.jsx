@@ -7,6 +7,9 @@ import Login from './pages/Login.jsx';
 import Overview from './pages/Overview.jsx';
 import Security from './pages/Security.jsx';
 import Cards from './pages/Cards.jsx';
+import Loans from './pages/Loans.jsx';
+import Deposits from './pages/Deposits.jsx';
+import FixedDeposits from './pages/FixedDeposits.jsx';
 import { SOON } from './soon.js';
 
 export default function App() {
@@ -18,6 +21,9 @@ export default function App() {
       <Route element={<Layout />}>
         <Route index element={<Overview />} />
         <Route path="cards" element={<Cards />} />
+        <Route path="loans" element={<Loans />} />
+        <Route path="deposits" element={<Deposits />} />
+        <Route path="fixed-deposits" element={<FixedDeposits />} />
         <Route path="security" element={<Security />} />
         {Object.values(SOON).map((s) => <Route key={s.path} path={s.path.slice(1)} element={<ComingSoon {...s} />} />)}
         <Route path="*" element={<Navigate to="/" replace />} />
