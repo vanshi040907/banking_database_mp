@@ -6,6 +6,7 @@ import { SOON } from './soon.js';
 
 const NAV = [
   { to: '/', label: 'Overview' },
+  { to: '/transfer', label: 'Send money' },
   { to: '/cards', label: 'Cards' },
   { to: '/loans', label: 'Loans' },
   { to: '/deposits', label: 'Deposits' },

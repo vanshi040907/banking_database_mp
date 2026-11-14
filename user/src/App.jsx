@@ -8,6 +8,7 @@ import Dashboard from './pages/Dashboard.jsx';
 import AccountDetail from './pages/AccountDetail.jsx';
 import Security from './pages/Security.jsx';
 import Cards from './pages/Cards.jsx';
+import Transfer from './pages/Transfer.jsx';
 import Loans from './pages/Loans.jsx';
 import Deposits from './pages/Deposits.jsx';
 import { SOON } from './soon.js';
@@ -22,6 +23,7 @@ export default function App() {
         <Route index element={<Dashboard />} />
         <Route path="accounts/:acc" element={<AccountDetail />} />
         <Route path="cards" element={<Cards />} />
+        <Route path="transfer" element={<Transfer />} />
         <Route path="loans" element={<Loans />} />
         <Route path="deposits" element={<Deposits />} />
         <Route path="security" element={<Security />} />
