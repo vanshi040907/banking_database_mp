@@ -11,7 +11,7 @@ export default function Overview() {
 
   const upcoming = Object.entries(SOON)
   .filter(([key]) =>
-  !['customers', 'accounts'].includes(key) &&
+  !['customers', 'accounts', 'cash'].includes(key) &&
   canOpenPage(user, key)
 )
   .map(([, page]) => page);
@@ -40,6 +40,16 @@ if (can(user, 'VIEW_ACCOUNTS')) {
   ready.push([
     'Accounts',
     'View account details and perform your permitted account actions'
+  ]);
+}
+
+if (
+  can(user, 'CASH_DEPOSIT') ||
+  can(user, 'CASH_WITHDRAW')
+) {
+  ready.push([
+    'Cash counter',
+    'Record permitted cash operations and view receipts'
   ]);
 }
 

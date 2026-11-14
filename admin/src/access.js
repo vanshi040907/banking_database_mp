@@ -22,8 +22,6 @@ export const PAGE_ACCESS = {
 
   transactions: ['VIEW_ALL_TRANSACTIONS'],
 
-  search: ['USE_NL_SEARCH'],
-
   staff: ['VIEW_EMPLOYEE_ROLES', 'MANAGE_EMPLOYEES'],
 
   audit: ['VIEW_AUDIT_LOG']
@@ -56,10 +54,6 @@ const FEATURES = {
 
   transactions: [
     ['VIEW_ALL_TRANSACTIONS', 'Browse and filter transactions']
-  ],
-
-  search: [
-    ['USE_NL_SEARCH', 'Ask read-only questions within your access']
   ],
 
   staff: [
