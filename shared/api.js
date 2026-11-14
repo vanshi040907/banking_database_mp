@@ -38,13 +38,60 @@ export async function api(path, { method = 'GET', body, token } = {}) {
 
 // GET helper with loading / error state
 export function useApi(path, deps = []) {
-  const [state, setState] = useState({ data: null, error: null, loading: true });
-  const load = useCallback(() => {
-    if (!path) return;
-    setState((s) => ({ ...s, loading: true, error: null }));
-    api(path).then((data) => setState({ data, error: null, loading: false }))
-      .catch((error) => setState({ data: null, error: error.message, loading: false }));
-  }, [path]); // eslint-disable-line react-hooks/exhaustive-deps
-  useEffect(load, [load, ...deps]); // eslint-disable-line react-hooks/exhaustive-deps
-  return { ...state, reload: load };
+  const [state, setState] = useState({
+    data: null,
+    error: null,
+    loading: !!path
+  });
+
+  const [retry, setRetry] = useState(0);
+
+  const reload = useCallback(() => {
+    setRetry(value => value + 1);
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    if (!path) {
+      setState({
+        data: null,
+        error: null,
+        loading: false
+      });
+      return;
+    }
+
+    setState(previous => ({
+      ...previous,
+      loading: true,
+      error: null
+    }));
+
+    api(path)
+      .then(data => {
+        if (!cancelled) {
+          setState({
+            data,
+            error: null,
+            loading: false
+          });
+        }
+      })
+      .catch(error => {
+        if (!cancelled) {
+          setState({
+            data: null,
+            error: error.message,
+            loading: false
+          });
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [path, retry, ...deps]);
+
+  return { ...state, reload };
 }

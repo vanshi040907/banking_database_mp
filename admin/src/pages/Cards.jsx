@@ -2,6 +2,9 @@ import { useState } from 'react';
 import { api } from '@shared/api.js';
 import { Alert, Button, Card, Field, Input, KV, Money, PageHeader, Segmented, useAction, useToast } from '@shared/ui.jsx';
 import { fmtDate, groupAcc, titleCase } from '@shared/format.js';
+import { useAuth } from '@shared/auth.jsx';
+import { can } from '../access.js';
+import CardUnblockQueue from './CardUnblockQueue.jsx';
 
 // the backend accepts 1 to 10 digits plus up to two decimals
 const LIMIT = /^[1-9]\d{0,9}(\.\d{1,2})?$/;
@@ -9,6 +12,12 @@ const digits = (s) => s.replace(/[^\d]/g, '');
 const money = (s) => s.replace(/[^\d.]/g, '');
 
 export default function Cards() {
+
+  const { user } = useAuth();
+const canUnblock = can(user, 'UNBLOCK_CARD');
+const canIssue = can(user, 'ISSUE_CARD');
+const canUpdateLimit = can(user, 'UPDATE_CARD_LIMIT');
+
   const toast = useToast();
   const [log, setLog] = useState([]); // what this session has done, newest first
 
@@ -46,9 +55,14 @@ export default function Cards() {
 
   return (
     <div className="soft-in">
-      <PageHeader title="Cards" subtitle="Issue debit and credit cards, and set their daily spending limits." />
+      <PageHeader
+  title="Cards"
+  subtitle="Issue cards, manage limits, and review unblock requests."
+/>
       <div className="grid gap-6 lg:grid-cols-2">
-        <Card as="form" onSubmit={submitIssue} className="space-y-5 p-7">
+
+        {canIssue && (
+          <Card as="form" onSubmit={submitIssue} className="space-y-5 p-7">
           <h2 className="text-[22px]">Issue a card</h2>
           <Field label="Account number" hint="The account must be active and in your branch, unless your role covers all branches.">
             <Input value={acc} onChange={(e) => setAcc(digits(e.target.value))} inputMode="numeric" placeholder="10-digit account number" required />
@@ -62,7 +76,10 @@ export default function Cards() {
           <Alert>{issue.error}</Alert>
           <Button type="submit" loading={issue.busy} disabled={acc.length < 6} className="w-full">Issue card</Button>
         </Card>
+)}
 
+{canUpdateLimit && (
+  
         <Card as="form" onSubmit={submitLimit} className="space-y-5 p-7">
           <h2 className="text-[22px]">Change a daily limit</h2>
           <Field label="Card ID" hint="Shown when a card is issued. Only active cards can be changed.">
@@ -74,6 +91,7 @@ export default function Cards() {
           <Alert>{change.error}</Alert>
           <Button type="submit" loading={change.busy} disabled={!cardId || !newLimit} className="w-full">Update limit</Button>
         </Card>
+)}
       </div>
 
       <section className="mt-8">
@@ -98,6 +116,7 @@ export default function Cards() {
           </div>
         )}
       </section>
+      {canUnblock && <CardUnblockQueue />}
     </div>
   );
 }

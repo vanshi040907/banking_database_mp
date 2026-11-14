@@ -5,6 +5,11 @@ import {
   requirePasswordChanged
 } from '../middleware/auth.js';
 
+import {
+  createUnblockRequest,
+  getMyUnblockRequests
+} from '../controllers/cardUnblockController.js';
+
 import { getMyAccounts, getAccountTransactions } from '../controllers/customerController.js';
 import {
   getMyCards,
@@ -19,6 +24,15 @@ const router = Router();
 
 router.use(verifyJWT, requireCustomer, requirePasswordChanged);
 
+router.get(
+  '/card-unblock-requests',
+  getMyUnblockRequests
+);
+
+router.post(
+  '/cards/:cardId/unblock-requests',
+  createUnblockRequest
+);
 router.get('/accounts', getMyAccounts);
 router.get('/cards', getMyCards);
 router.get('/cards/:cardId', getCardDetails);

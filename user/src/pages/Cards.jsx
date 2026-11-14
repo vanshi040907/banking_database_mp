@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { api, useApi } from '@shared/api.js';
 import { Alert, Badge, Button, Card, EmptyState, ErrorNote, Loading, Modal, PageHeader, StatusBadge, useAction, useToast } from '@shared/ui.jsx';
 import { fmtDate, inr, inrShort, titleCase } from '@shared/format.js';
+import CardUnblockRequests from './cardUnblockRequests.jsx';
 
 // "2031-11-12T00:00:00.000Z" -> "11/31"
 const expiry = (iso) => `${iso.slice(5, 7)}/${iso.slice(2, 4)}`;
@@ -28,7 +29,7 @@ function CardTile({ card, onBlock }) {
         <span className="text-[13px] text-ink-400">Issued {fmtDate(card.issueDate)}</span>
         {live
           ? <Button variant="danger" size="sm" onClick={() => onBlock(card)}>Block card</Button>
-          : <span className="text-[13px] text-ink-400">{card.status === 'BLOCKED' ? 'Visit your branch to unblock' : 'This card has expired'}</span>}
+          : <span className="text-[13px] text-ink-400">{card.status === 'BLOCKED' ? 'Request an Unblock Below' : 'This card has expired'}</span>}
       </div>
       <div className="absolute inset-x-0 top-0 h-[3px] bg-gradient-to-r from-ink-700 via-violet-400 to-transparent opacity-60" />
     </Card>
@@ -62,11 +63,23 @@ export default function Cards() {
       </div>
       {cards.length > 0 && <Alert tone="info" className="mt-6">Lost a card? Block it here straight away. Only your branch can unblock or replace it, and limits are set by your branch too.</Alert>}
 
+      {data && (
+  <CardUnblockRequests
+    cards={cards}
+    onRefresh={reload}
+  />
+)}
+
       <Modal open={!!target} onClose={() => { setTarget(null); act.setError(''); }} title="Block this card?" width={460}>
         {target && (
           <div className="space-y-4">
             <p className="text-ink-500">The {titleCase(target.cardType).toLowerCase()} card ending <span className="tnum font-semibold text-ink-900">{target.cardNumber.slice(-4)}</span> will stop working immediately. You cannot undo this yourself: your branch has to unblock it.</p>
-            <Alert>{act.error}</Alert>
+            {cards.length > 0 && (
+  <Alert tone="info" className="mt-6">
+    Block a card immediately if necessary. You can request
+    an unblock below; authorized branch staff review the request.
+  </Alert>
+)}
             <div className="flex justify-end gap-2.5">
               <Button variant="ghost" onClick={() => { setTarget(null); act.setError(''); }}>Keep it active</Button>
               <Button variant="danger" loading={act.busy} onClick={block}>Block card</Button>

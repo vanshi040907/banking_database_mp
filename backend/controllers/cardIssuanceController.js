@@ -80,14 +80,14 @@ export const issueCard = wrap(async (req, res) => {
 
   try {
     const card = await prisma.$transaction(async (tx) => {
-      const account = await tx.account.findUnique({
-        where: { acc_no: BigInt(accountNumber) },
-        select: {
-          acc_no: true,
-          branch_ifsc: true,
-          status: true
-        }
-      });
+      const accounts = await tx.$queryRaw`
+  SELECT acc_no, branch_ifsc, status
+  FROM account
+  WHERE acc_no = ${BigInt(accountNumber)}
+  FOR UPDATE
+`;
+
+const account = accounts[0];
 
       if (!account) {
         const error = new Error('Account not found');
