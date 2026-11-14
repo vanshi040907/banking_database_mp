@@ -1,4 +1,4 @@
-import { transferMoney } from '../services/transferService.js';
+import { recordFailedTransfer, transferMoney } from '../services/transferService.js';
 import { wrap } from '../utils/wrap.js';
 import { PinError } from '../services/transactionPinService.js';
 
@@ -104,7 +104,12 @@ if (
 
     const message = String(err.sqlMessage ?? err.message ?? '');
 
+    const failed = (reason) => recordFailedTransfer({
+      customerId: req.user.id, fromAccNo, toAccNo, amount, idempotencyKey, reason
+    });
+
     if (err instanceof PinError) {
+  await failed(err.message);
   return res.status(err.status).json({
     error: err.message
   });
@@ -112,6 +117,7 @@ if (
 
 
     if (err.sqlState === '45000' && knownErrors.includes(message)) {
+      await failed(message);
       return res.status(400).json({ error: message });
     }
 

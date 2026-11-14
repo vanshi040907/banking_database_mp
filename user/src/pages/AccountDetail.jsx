@@ -1,11 +1,14 @@
+import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useApi } from '@shared/api.js';
-import { Badge, Card, ErrorNote, KV, Loading, Money, StatusBadge } from '@shared/ui.jsx';
-import { fmtDate, groupAcc, titleCase } from '@shared/format.js';
+import { Badge, Button, Card, ErrorNote, KV, Loading, Money, StatusBadge } from '@shared/ui.jsx';
+import { fmtDate, fmtDateTime, inr, groupAcc, titleCase } from '@shared/format.js';
 
 export default function AccountDetail() {
   const { acc } = useParams();
   const { data, error, reload } = useApi('/customer/accounts');
+  const [page, setPage] = useState(1);
+  const history = useApi(`/customer/accounts/${acc}/transactions?page=${page}`);
   if (error) return <ErrorNote onRetry={reload}>{error}</ErrorNote>;
   if (!data) return <Loading />;
   const a = data.accounts.find((x) => x.accountNumber === acc);
@@ -22,9 +25,45 @@ export default function AccountDetail() {
       </div>
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
-        <Card className="border-dashed p-7">
-          <div className="mb-1 flex items-center justify-between"><h2 className="text-[21px]">Transactions</h2><Badge tone="violet">Coming soon</Badge></div>
-          <p className="max-w-[460px] text-[14.5px] text-ink-400">Every payment in and out of this account will be listed here, with search and filters, as soon as transaction history is ready.</p>
+        <Card className="p-7">
+          <h2 className="mb-4 text-[21px]">Transactions</h2>
+          {history.error && <ErrorNote onRetry={history.reload}>{history.error}</ErrorNote>}
+          {history.loading && !history.data && <Loading />}
+          {history.data && !history.data.transactions.length && !history.data.failedPayments.length && <p className="text-[14.5px] text-ink-400">No payments yet.</p>}
+          <div className="divide-y divide-line">
+            {history.data?.transactions.map((t) => (
+              <div key={t.transactionId} className="flex items-start justify-between gap-4 py-3">
+                <div>
+                  <p className="font-medium">{t.direction === 'DEBIT' ? 'Sent' : 'Received'} · {titleCase(t.mode)}</p>
+                  <p className="text-[13.5px] text-ink-400">{t.counterpartyAccount ? `Account ${t.counterpartyAccount}` : titleCase(t.type)} · {fmtDateTime(t.date)}</p>
+                  {t.remarks && <p className="text-[13px] text-ink-400">{t.remarks}</p>}
+                </div>
+                <div className="text-right">
+                  <p className="tnum font-medium">{t.direction === 'DEBIT' ? '−' : '+'}{inr(t.amount)}</p>
+                  <StatusBadge status={t.status} />
+                </div>
+              </div>
+            ))}
+          </div>
+          {history.data?.failedPayments.length > 0 && (
+            <div className="mt-6 border-t border-line pt-4">
+              <h3 className="mb-1 text-[16px] font-semibold">Failed payment attempts</h3>
+              <p className="mb-2 text-[13px] text-ink-400">No money moved for these.</p>
+              {history.data.failedPayments.map((f) => (
+                <div key={f.attemptId} className="flex items-start justify-between gap-4 py-2.5">
+                  <div><p className="font-medium">To account {f.recipientAccount}</p><p className="text-[13.5px] text-ink-400">{f.reason} · {fmtDateTime(f.date)}</p></div>
+                  <p className="tnum font-medium">{inr(f.amount)}</p>
+                </div>
+              ))}
+            </div>
+          )}
+          {history.data?.pagination.totalPages > 1 && (
+            <div className="mt-4 flex items-center justify-between gap-3">
+              <Button variant="ghost" size="sm" disabled={page <= 1} onClick={() => setPage(page - 1)}>Newer</Button>
+              <span className="text-[13.5px] text-ink-400">Page {page} of {history.data.pagination.totalPages}</span>
+              <Button variant="ghost" size="sm" disabled={page >= history.data.pagination.totalPages} onClick={() => setPage(page + 1)}>Older</Button>
+            </div>
+          )}
         </Card>
         <Card className="px-6 py-3">
           <dl>

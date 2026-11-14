@@ -123,6 +123,15 @@ export const getAccountTransactions = wrap(async (req, res) => {
 
   const total = Number(countRows[0].total);
 
+  // Rejected transfers from this account (newest 10, first page only)
+  const failedPayments = page === 1 ? await prisma.$queryRaw`
+    SELECT attempt_id, reference_no, to_acc_no, amount, failure_reason, created_at
+    FROM failed_transfer_attempt
+    WHERE from_acc_no = ${String(accountNumber)}
+    ORDER BY created_at DESC, attempt_id DESC
+    LIMIT 10
+  ` : [];
+
   // 6. Return formatted response
   res.json({
     accountNumber: accNo,
@@ -143,6 +152,14 @@ export const getAccountTransactions = wrap(async (req, res) => {
       direction: t.direction,
       counterpartyAccount: t.counterparty_acc_no?.toString() ?? null,
       remarks: t.remarks
+    })),
+    failedPayments: failedPayments.map(f => ({
+      attemptId: f.attempt_id.toString(),
+      referenceNumber: f.reference_no,
+      recipientAccount: f.to_acc_no,
+      amount: f.amount.toString(),
+      reason: f.failure_reason,
+      date: f.created_at
     }))
   });
 });

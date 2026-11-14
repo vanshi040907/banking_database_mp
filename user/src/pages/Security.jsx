@@ -1,5 +1,6 @@
 import { useAuth } from '@shared/auth.jsx';
 import PasswordForm from '@shared/PasswordForm.jsx';
+import TransactionPinForm from './TransactionPinForm.jsx';
 import { Alert, Card, PageHeader, useToast } from '@shared/ui.jsx';
 
 export default function Security() {
@@ -7,8 +8,10 @@ export default function Security() {
   const toast = useToast();
   return (
     <div className="soft-in">
-      <PageHeader title="Security" subtitle="Change your password. You will be signed out afterwards." />
+      <PageHeader title="Security" subtitle="Manage your transaction PIN and password." />
+      <Card className="mb-6 max-w-[520px] p-7"><TransactionPinForm /></Card>
       <Card className="max-w-[520px] p-7">
+        <h2 className="mb-4 text-[22px]">Change password</h2>
         <PasswordForm onDone={() => { toast('Password changed. Please sign in again.'); setTimeout(signOut, 1400); }} />
       </Card>
       <Alert tone="info" className="mt-6 max-w-[520px]">Sign-in always needs your password and a one-time code sent to your registered mobile number.</Alert>

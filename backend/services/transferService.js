@@ -51,3 +51,17 @@ export async function transferMoney({
     connection.release();
   }
 }
+
+// Remember a rejected transfer so it can be shown in the customer's history.
+export async function recordFailedTransfer({ customerId, fromAccNo, toAccNo, amount, idempotencyKey, reason }) {
+  try {
+    await pool.execute(
+      `INSERT INTO failed_transfer_attempt
+       (reference_no, customer_id, from_acc_no, to_acc_no, amount, failure_reason)
+       VALUES (?, ?, ?, ?, ?, ?)`,
+      [idempotencyKey, customerId, fromAccNo, toAccNo, amount, String(reason).slice(0, 255)]
+    );
+  } catch (e) {
+    console.error('Could not record failed transfer:', e.message); // never hide the real error
+  }
+}
