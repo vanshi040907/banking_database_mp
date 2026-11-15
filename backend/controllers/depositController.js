@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 
 import { Prisma } from '@prisma/client';
 import { prisma } from '../db.js';
@@ -117,6 +118,7 @@ export const createCashDeposit = wrap(async (req, res) => {
         ${BigInt(accountNumber)},
         ${new Prisma.Decimal(amount)},
         ${remarks?.trim() || 'Branch cash deposit'},
+        ${randomUUID()},
         @deposit_trans_id
       )
     `;
