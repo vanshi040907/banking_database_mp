@@ -549,4 +549,51 @@ BEGIN
     END IF;
 END$$
 
+-- Triggers that write audit entries for changes made outside the stored procedures.
+CREATE TRIGGER trg_employee_role_audit AFTER UPDATE ON employee FOR EACH ROW
+BEGIN
+    IF NOT (OLD.role_id <=> NEW.role_id) THEN
+        INSERT INTO audit_log (emp_id, action, table_name, record_id, old_value, new_value, details)
+        VALUES (NULL, 'EMP_ROLE_CHANGE', 'employee', CAST(NEW.emp_id AS CHAR),
+                CAST(OLD.role_id AS CHAR), CAST(NEW.role_id AS CHAR), 'Role changed');
+    END IF;
+END$$
+
+CREATE TRIGGER trg_customer_kyc_audit AFTER UPDATE ON customer FOR EACH ROW
+BEGIN
+    IF NOT (OLD.kyc_status <=> NEW.kyc_status) THEN
+        INSERT INTO audit_log (emp_id, action, table_name, record_id, old_value, new_value, details)
+        VALUES (NULL, 'KYC_CHANGE', 'customer', CAST(NEW.cust_id AS CHAR),
+                OLD.kyc_status, NEW.kyc_status, 'KYC status changed');
+    END IF;
+END$$
+
+CREATE TRIGGER trg_loan_payment_audit AFTER INSERT ON loan_payment FOR EACH ROW
+BEGIN
+    INSERT INTO audit_log (emp_id, action, table_name, record_id, new_value, details)
+    VALUES (NULL, 'LOAN_PAYMENT', 'loan_payment', CAST(NEW.pay_id AS CHAR), CAST(NEW.amount AS CHAR),
+            CONCAT('Loan ', NEW.loan_id, ', EMI ', COALESCE(CAST(NEW.emi_id AS CHAR), 'none')));
+END$$
+
+-- The audit log can only be added to.
+CREATE TRIGGER trg_audit_no_update BEFORE UPDATE ON audit_log FOR EACH ROW
+BEGIN
+    SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Audit entries cannot be updated';
+END$$
+
+CREATE TRIGGER trg_audit_no_delete BEFORE DELETE ON audit_log FOR EACH ROW
+BEGIN
+    SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Audit entries cannot be deleted';
+END$$
+
+CREATE TRIGGER trg_audit_branch_no_update BEFORE UPDATE ON audit_log_branch FOR EACH ROW
+BEGIN
+    SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Audit branch records cannot be updated';
+END$$
+
+CREATE TRIGGER trg_audit_branch_no_delete BEFORE DELETE ON audit_log_branch FOR EACH ROW
+BEGIN
+    SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Audit branch records cannot be deleted';
+END$$
+
 DELIMITER ;
