@@ -6,8 +6,7 @@ Repository structure
 banking_db/
 ├── database/
 │   ├── schema.sql
-│   ├── procedures.sql
-│   ├── views.sql
+│   ├── logic.sql
 │   └── seed.sql
 ├── backend/
 │   ├── app.js
@@ -50,16 +49,14 @@ Replace `<REPO_URL>` with your actual Git repository URL.
 3. Create your local database
 The MySQL database itself is not committed to Git. Every collaborator builds their own local database from the SQL scripts.
 In MySQL Workbench, connect to your local MySQL server and execute the following scripts in order:
-`database/schema.sql`
-`database/procedures.sql`
-`database/views.sql`
-`database/seed.sql`
-`database/card_permissions.sql` (needed for the Cards feature: adds the `ISSUE_CARD` and `UPDATE_CARD_LIMIT` permissions; without it, issuing cards and changing limits returns 403)
+`database/schema.sql` (tables)
+`database/logic.sql` (the one view, the permission function, stored procedures and triggers)
+`database/seed.sql` (starter data, including every permission and role)
 > **WARNING:** `schema.sql` contains `DROP DATABASE IF EXISTS bank_db;`. Re-running it **deletes all data in that database**, including any accounts, transactions, and password changes created during testing. Do not run it on a database containing data you need to preserve. Coordinate schema resets with the team.
 Verify setup in Workbench:
 ```sql
 USE bank_db;
-SHOW TABLES;                         -- 24 base tables (views appear too)
+SHOW TABLES;                         -- base tables plus the v_transaction_history view
 SELECT acc_no, cust_id, balance FROM account;  -- 5 seeded accounts
 SELECT emp_id, emp_name, status FROM employee; -- 8 seeded employees
 ```
