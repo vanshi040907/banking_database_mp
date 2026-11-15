@@ -41,7 +41,7 @@ export default function Transfer() {
     e.preventDefault();
     act.run(async () => {
       if (!AMOUNT.test(amount) || Number(amount) <= 0) throw new Error('Enter an amount like 500 or 500.50.');
-      const r = await api('/customer/transfers', { method: 'POST', body: {
+      const r = await api('/customer/transfers', { method: 'POST', signOutOnUnauthorized: false, body: {
         fromAccNo: source, toAccNo: to, amount, transactionPin: pin, idempotencyKey: key.current,
         ...(remarks ? { remarks } : {}) } });
       toast('Transfer sent');

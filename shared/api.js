@@ -13,7 +13,7 @@ export class ApiError extends Error {
 
 // Talks to the Express backend (proxied at /api). `token` overrides the stored one,
 // used for the forced password change that happens before a session exists.
-export async function api(path, { method = 'GET', body, token } = {}) {
+export async function api(path, { method = 'GET', body, token, signOutOnUnauthorized = true } = {}) {
   const bearer = token ?? tokenStore.get();
   let res;
   try {
@@ -28,7 +28,7 @@ export async function api(path, { method = 'GET', body, token } = {}) {
   // the rate limiter answers with plain text, so JSON parsing can fail
   const data = await res.json().catch(() => ({}));
   if (res.status === 429 && !data.error) throw new ApiError(429, 'Too many attempts. Please wait a few minutes and try again.');
-  if (res.status === 401 && !token && tokenStore.get() && !path.startsWith('/auth/')) {
+  if (res.status === 401 && signOutOnUnauthorized && !token && tokenStore.get() && !path.startsWith('/auth/')) {
     tokenStore.clear();
     window.dispatchEvent(new Event('inkwell:signed-out'));
   }

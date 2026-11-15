@@ -20,7 +20,7 @@ export default function TransactionPinForm() {
     e.preventDefault();
     act.run(async () => {
       const body = mode === 'setup' ? { password, newPin: pin } : { password, currentPin: current, newPin: pin };
-      await api(`/customer/accounts/${account}/pin/${mode}`, { method: 'POST', body });
+      await api(`/customer/accounts/${account}/pin/${mode}`, { method: 'POST', body, signOutOnUnauthorized: false });
       toast(mode === 'setup' ? 'Transaction PIN set' : 'Transaction PIN changed');
       setPassword(''); setCurrent(''); setPin('');
     });
