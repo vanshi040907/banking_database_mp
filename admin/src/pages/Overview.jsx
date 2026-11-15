@@ -1,74 +1,42 @@
 import { Link } from 'react-router-dom';
 import { useAuth } from '@shared/auth.jsx';
-import { Badge, Card, SectionTitle } from '@shared/ui.jsx';
+import { Card, KV, SectionTitle } from '@shared/ui.jsx';
 import { greeting, titleCase } from '@shared/format.js';
 
+import {
+  can,
+  canOpenPage,
+  pageFeatures
+} from '../access.js';
+
 import { SOON } from '../soon.js';
-import { can, canOpenPage } from '../access.js';
 
 export default function Overview() {
   const { user } = useAuth();
 
-  const upcoming = Object.entries(SOON)
-  .filter(([key]) =>
-  !['customers', 'accounts', 'cash', 'transactions', 'staff'].includes(key) &&
-  canOpenPage(user, key)
-)
-  .map(([, page]) => page);
+  const cards = [
+    ['ISSUE_CARD', 'Issue demo cards'],
+    ['UPDATE_CARD_LIMIT', 'Update card limits'],
+    ['UNBLOCK_CARD', 'Review unblock requests']
+  ]
+    .filter(([permission]) => can(user, permission))
+    .map(([, text]) => text);
 
-  const ready = [
-    ['Secure sign-in', 'Employee ID, password and a one-time code'],
-    ['Password change', 'Manage your password from Security']
-  ];
+  const pages = [
+    {
+      key: 'cards',
+      label: 'Cards',
+      path: '/cards',
+      features: cards
+    },
 
-  if (can(user, 'ISSUE_CARD')) {
-    ready.push(['Issue cards', 'Create demo debit and credit cards']);
-  }
-
-  if (can(user, 'UPDATE_CARD_LIMIT')) {
-    ready.push(['Card limits', 'Update daily spending limits']);
-  }
-
-  if (canOpenPage(user, 'customers')) {
-  ready.push([
-    'Customers',
-    'Search profiles and perform your permitted customer actions'
-  ]);
-}
-
-if (can(user, 'VIEW_ACCOUNTS')) {
-  ready.push([
-    'Accounts',
-    'View account details and perform your permitted account actions'
-  ]);
-}
-
-if (
-  can(user, 'CASH_DEPOSIT') ||
-  can(user, 'CASH_WITHDRAW')
-) {
-  ready.push([
-    'Cash counter',
-    'Record permitted cash operations and view receipts'
-  ]);
-}
-
-if (can(user, 'VIEW_ALL_TRANSACTIONS')) {
-  ready.push([
-    'Transactions',
-    'Browse and filter ledger transactions within your branch scope'
-  ]);
-}
-
-if (
-  can(user, 'VIEW_EMPLOYEE_ROLES') ||
-  can(user, 'MANAGE_EMPLOYEES')
-) {
-  ready.push([
-    'Staff',
-    'View employees and perform permitted staff-management actions'
-  ]);
-}
+    ...Object.entries(SOON).map(([key, page]) => ({
+      key,
+      label: page.label,
+      path: page.path,
+      features: pageFeatures(user, key)
+    }))
+  ].filter(page => canOpenPage(user, page.key));
 
   return (
     <div className="soft-in">
@@ -80,63 +48,59 @@ if (
         {greeting()}, {user.name}.
       </h1>
 
-      <p className="mb-9 max-w-[560px] text-ink-400">
+      <p className="mb-9 text-ink-400">
         {user.scope === 'ALL_BRANCHES'
-          ? 'You can work across all branches.'
+          ? 'Your workspace covers all branches.'
           : `Your workspace covers ${user.branch.name}.`}
-        {' '}The options below match your permissions.
       </p>
 
-      <div className="grid gap-6 lg:grid-cols-2">
-        <Card className="p-6">
-          <SectionTitle>Ready now</SectionTitle>
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
+        <section className="space-y-4">
+          <SectionTitle>Your workspaces</SectionTitle>
 
-          <ul className="space-y-3.5 text-[15px]">
-            {ready.map(([title, description]) => (
-              <li key={title} className="flex items-start gap-3">
-                <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-ok-50 text-[13px] text-ok-600">
-                  ✓
-                </span>
+          {pages.map(page => (
+            <Link
+              key={page.key}
+              to={page.path}
+              className="block"
+            >
+              <Card className="p-5 transition hover:border-ink-200 hover:bg-violet-50">
+                <h2 className="text-[22px]">{page.label}</h2>
 
-                <div>
-                  <div className="font-medium text-ink-900">
-                    {title}
-                  </div>
+                <ul className="mt-2 space-y-1 text-sm text-ink-400">
+                  {page.features.map(feature => (
+                    <li key={feature}>{feature}</li>
+                  ))}
+                </ul>
+              </Card>
+            </Link>
+          ))}
+        </section>
 
-                  <div className="text-[13.5px] text-ink-400">
-                    {description}
-                  </div>
-                </div>
-              </li>
-            ))}
-          </ul>
-        </Card>
+        <Card className="h-fit p-5">
+          <SectionTitle>Your access</SectionTitle>
 
-        <Card className="p-6">
-          <SectionTitle>Coming next</SectionTitle>
+          <dl>
+            <KV k="Employee" v={user.id} />
+            <KV k="Role" v={titleCase(user.role)} />
+            <KV k="Branch" v={user.branch.name} />
 
-          {upcoming.length === 0 && (
-            <p className="text-sm text-ink-400">
-              No additional modules are assigned to your role.
-            </p>
-          )}
+            <KV
+              k="Scope"
+              v={
+                user.scope === 'ALL_BRANCHES'
+                  ? 'All branches'
+                  : 'Own branch'
+              }
+            />
+          </dl>
 
-          <ul className="space-y-1">
-            {upcoming.map(page => (
-              <li key={page.path}>
-                <Link
-                  to={page.path}
-                  className="flex items-center justify-between rounded-lg px-2 py-2 hover:bg-violet-50"
-                >
-                  <span className="text-[15px] text-ink-800">
-                    {page.label}
-                  </span>
-
-                  <Badge tone="violet">Soon</Badge>
-                </Link>
-              </li>
-            ))}
-          </ul>
+          <Link
+            to="/security"
+            className="mt-4 inline-block text-sm text-violet-700 underline underline-offset-4"
+          >
+            Manage your password
+          </Link>
         </Card>
       </div>
     </div>

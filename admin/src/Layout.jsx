@@ -37,7 +37,7 @@ export default function Layout() {
 
       <span className="flex-1">{page.label}</span>
 
-      {!['customers', 'accounts', 'cash', 'transactions', 'staff'].includes(key) && (
+      {!['customers', 'accounts', 'cash', 'transactions', 'staff', 'audit'].includes(key) && (
   <span className="rounded-full bg-violet-100 px-1.5 py-px text-[10px] font-semibold uppercase tracking-wide text-violet-600">
     Soon
   </span>
