@@ -15,6 +15,13 @@ import fixedDepositRouter from './routes/fixedDeposit.js';
 
 // account numbers are BigInt; JSON can't send BigInt unless we convert it
 BigInt.prototype.toJSON = function () { return this.toString(); };
+import { getSession } from './controllers/sessionController.js';
+import employeeRouter from './routes/employee.js';
+import accountRouter from './routes/account.js';
+import cashRouter from './routes/cash.js';
+import transactionRouter from './routes/transaction.js';
+import staffRouter from './routes/staff.js';
+import auditRouter from './routes/audit.js';
 
 const app = express();
 app.use(cors());
@@ -34,20 +41,27 @@ app.get('/health', async (req, res) => {
 app.use('/api/auth', rateLimit({ windowMs: 15 * 60 * 1000, limit: 30 }), authRouter);
 
 // two temporary routes to test the checks
-app.get('/api/me', verifyJWT, requirePasswordChanged, (req, res) => res.json(req.user));
-
-app.use('/api/customer', customerRouter); 
-app.use('/api/employee/cards', cardRouter);
-
-app.use('/api/employee/loans', loanRouter);
-
-// Employee Cash Deposit APIs
-app.use('/api/employee/deposits', depositRouter);
-
-app.use('/api/employee/fixed-deposits', fixedDepositRouter);
+app.get(
+  '/api/me',
+  verifyJWT,
+  requirePasswordChanged,
+  getSession
+);
 
 app.get('/api/test/freeze-permission', verifyJWT, requireEmployee, requirePasswordChanged,
   requirePermission('FREEZE_ACCOUNT'), (req, res) => res.json({ allowed: true }));
+
+app.use('/api/customer', customerRouter); 
+app.use('/api/employee/cards', cardRouter);
+app.use('/api/employee/accounts', accountRouter);
+app.use('/api/employee/cash', cashRouter);
+app.use('/api/employee/transactions', transactionRouter);
+app.use('/api/employee/staff', staffRouter);
+app.use('/api/employee/audit', auditRouter);
+app.use('/api/employee/loans', loanRouter);
+app.use('/api/employee/deposits', depositRouter);
+app.use('/api/employee/fixed-deposits', fixedDepositRouter);
+app.use('/api/employee', employeeRouter);
 
 // last: catches any error thrown inside a route
 app.use((err, req, res, next) => {

@@ -13,12 +13,29 @@ import {
   updateCardLimit
 } from '../controllers/cardIssuanceController.js';
 
+import {
+  listUnblockRequests,
+  reviewUnblockRequest
+} from '../controllers/cardUnblockController.js';
+
 const router = Router();
 
 router.use(
   verifyJWT,
   requireEmployee,
   requirePasswordChanged
+);
+
+router.get(
+  '/unblock-requests',
+  requirePermission('UNBLOCK_CARD'),
+  listUnblockRequests
+);
+
+router.patch(
+  '/unblock-requests/:requestId',
+  requirePermission('UNBLOCK_CARD'),
+  reviewUnblockRequest
 );
 
 router.post(

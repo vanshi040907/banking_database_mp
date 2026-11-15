@@ -50,11 +50,11 @@ INSERT INTO role_permission (role_id, perm_id)
 SELECT r.role_id, p.perm_id
 FROM role r JOIN permission p ON
      (r.role_name = 'ACCOUNT_OFFICER'  AND p.perm_code IN ('REGISTER_CUSTOMER','OPEN_ACCOUNT','CLOSE_ACCOUNT','VIEW_ACCOUNTS','VIEW_PERSONAL_INFO'))
-  OR (r.role_name = 'ANALYST'          AND p.perm_code IN ('VIEW_ACCOUNTS','VIEW_ALL_TRANSACTIONS','USE_NL_SEARCH','ACCESS_ALL_BRANCHES'))
+  OR (r.role_name = 'ANALYST'          AND p.perm_code IN ('VIEW_ACCOUNTS','VIEW_ALL_TRANSACTIONS'))
   OR (r.role_name = 'CUSTOMER_SERVICE' AND p.perm_code IN ('VIEW_ACCOUNTS','VIEW_PERSONAL_INFO','EDIT_CUSTOMER_DETAILS'))
   OR (r.role_name = 'CASHIER'          AND p.perm_code IN ('VIEW_ACCOUNTS','CASH_DEPOSIT','CASH_WITHDRAW'))
-  OR (r.role_name = 'MANAGER'          AND p.perm_code IN ('VIEW_ACCOUNTS','VIEW_ALL_TRANSACTIONS','VIEW_PERSONAL_INFO','FREEZE_ACCOUNT','VIEW_EMPLOYEE_ROLES','VIEW_AUDIT_LOG','USE_NL_SEARCH'))
-  OR (r.role_name = 'ADMIN'            AND p.perm_code IN ('MANAGE_EMPLOYEES','VIEW_EMPLOYEE_ROLES','VIEW_AUDIT_LOG','ACCESS_ALL_BRANCHES'));
+  OR (r.role_name = 'MANAGER'          AND p.perm_code IN ('VIEW_ACCOUNTS','VIEW_ALL_TRANSACTIONS','VIEW_PERSONAL_INFO','FREEZE_ACCOUNT','VIEW_EMPLOYEE_ROLES','VIEW_AUDIT_LOG'))
+  OR (r.role_name = 'ADMIN');
 
 -- ---------------------------------------------------------------------
 -- Employees (ids 1-8 in this order)

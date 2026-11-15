@@ -21,11 +21,6 @@ export const SOON = {
     subtitle: 'Every movement of money in your scope, newest first.',
     features: ['Filter by type, amount and date', 'Search by account or reference', 'Branch-scoped, or all branches for analysts'],
   },
-  search: {
-    path: '/search', label: 'Ask in plain English', title: 'Ask in plain English', art: 'horizon', icon: 'M8 13.5a5.5 5.5 0 1 0 0-11 5.5 5.5 0 0 0 0 11ZM12 12l3.5 3.5',
-    subtitle: 'Type a question about accounts or transactions and get a table back.',
-    features: ['“Frozen accounts”', '“Transfers above 10k this week”', '“Top 3 accounts by balance”', 'No personal details for roles that should not see them'],
-  },
   staff: {
     path: '/staff', label: 'Staff', title: 'Staff', art: 'horizon', icon: 'M6.5 8a2.3 2.3 0 1 0 0-4.6 2.3 2.3 0 0 0 0 4.6ZM2 14c0-2.3 2-3.5 4.5-3.5S11 11.7 11 14M12 4.5a2 2 0 0 1 0 3.8M13.5 10.7c1.3.4 2.2 1.4 2.2 3.3',
     subtitle: 'People, roles and access across the bank.',
