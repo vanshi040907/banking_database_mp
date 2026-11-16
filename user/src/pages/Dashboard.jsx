@@ -4,13 +4,6 @@ import { Art } from '@shared/Art.jsx';
 import { Badge, Button, Card, ErrorNote, Loading, Money, SectionTitle, StatusBadge } from '@shared/ui.jsx';
 import { greeting, groupAcc, inr, titleCase } from '@shared/format.js';
 
-const Soon = ({ title, text }) => (
-  <Card className="border-dashed p-6">
-    <div className="mb-1 flex items-center justify-between"><h2 className="text-[21px]">{title}</h2><Badge tone="violet">Coming soon</Badge></div>
-    <p className="text-[14px] text-ink-400">{text}</p>
-  </Card>
-);
-
 export default function Dashboard() {
   const { data, error, loading, reload } = useApi('/customer/accounts');
   const accounts = data?.accounts;
@@ -30,7 +23,7 @@ export default function Dashboard() {
       {error && <ErrorNote onRetry={reload}>{error}</ErrorNote>}
       {loading && !accounts && <Loading />}
       {accounts && (
-        <div className="soft-in-2 grid gap-6 lg:grid-cols-[minmax(0,1fr)_380px]">
+        <div className="soft-in-2">
           <div className="space-y-8">
             <Card className="flex flex-wrap items-end justify-between gap-6 p-7">
               <div>
@@ -59,10 +52,6 @@ export default function Dashboard() {
               </div>
             </section>
           </div>
-          <aside className="space-y-6">
-            <Soon title="Recent activity" text="Your latest payments and deposits will appear here once transaction history is ready." />
-            <Soon title="Savings" text="A picture of money in versus money out over the week, month and year." />
-          </aside>
         </div>
       )}
     </div>
